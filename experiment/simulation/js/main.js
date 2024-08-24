@@ -6,7 +6,7 @@ let cd = new Date();
 var currentDateGlobal = `${cd.getDate()} - ${
   cd.getMonth() + 1
 } - ${cd.getFullYear()}`;
-console.log(currentDateGlobal);
+ ;
 
 // * Quiz object
 const Quiz = {
@@ -257,10 +257,32 @@ let isPerformNext = false;
 // animation is running
 let isRunning = false;
 // to set isProcessRunning and also sync the progressbar + drawer
+// ! and toggle the next btn active / deactive
+function toggleNextBtn(){
+  let nextBtn = document.querySelector(".btn-next")
+  nextBtn.classList.toggle("btn-deactive")
+}
 const setIsProcessRunning = (value) => {
+  // calling toggle the next
+  if(value != isRunning){
+    toggleNextBtn()
+  }
+  // the step is ended
+  if(!value){
+    // reset showArrowMenuItemNumber 
+    Scenes.menuItemNumber = 1
+    setCC("Click 'Next' to go to next step");
+    get(".blinkArrow").classList.add("bright");
+    Dom.setBlinkArrow(true, 790, 415).play();
+    Scenes.activeAllMenuItems()
+  }
   isRunning = value;
   if(value){
     Dom.hideAll()
+    get(".blinkArrow").classList.remove("bright");
+    window.speechSynthesis.cancel();
+    if(ccQueue)
+      ccQueue = []
   }
 };
 
@@ -340,7 +362,7 @@ function setCC(text = null, speed = null) {
     strings: ["", ...ccQueue],
     typeSpeed: 25,
     onStringTyped(){
-      console.log(ccQueue);
+       ;
       ccQueue.shift();
       // if(ccQueue.length != 0){
       //   setCC(ccQueue.shift())
@@ -827,6 +849,45 @@ const Scenes = {
   contentAdderAddBtn(text) {
     Scenes.items.contentAdderBox.item.innerHTML += `<li class="btn content-adder">${text}</li>`;
   },
+  // ! Show arrow according to menu item number
+  menuItemNumber: 1,
+  showArrowForMenuItem(repeat=false){
+    if(repeat){
+      this.menuItemNumber--;
+    }
+    this.disableInvalidMenuItemsClick()
+
+    let menuLeftOffset = get(".content-adder-box").offsetLeft
+    let gapArrowWith = 71
+
+    this.leftGap = menuLeftOffset - gapArrowWith
+
+    let initialFixedTop = -35
+    let gapTopFixed = 50
+    let finalTop = initialFixedTop
+
+    for(let i=1;i< this.menuItemNumber;i++){
+      finalTop+=gapTopFixed 
+    }
+
+    this.menuItemNumber++
+    Dom.setBlinkArrow(true, this.leftGap, finalTop).play()
+  },
+  // ! to disable menu item clicks
+  disableInvalidMenuItemsClick(){
+    let allMenuItems = getAll(".content-adder-box li")
+    allMenuItems.forEach(menuItem => {
+      menuItem.style.pointerEvents = "none"
+    })
+
+    allMenuItems[this.menuItemNumber - 1].style.pointerEvents = ""
+  },
+  activeAllMenuItems(){
+    getAll(".content-adder-box li").forEach(item=>item.style.pointerEvents = "")
+  },
+  repeatShowArrowForMenuItem(){
+    this.showArrowForMenuItem(true)
+  },
   currentStep: 0,
   subCurrentStep: 0,
   resetSubStep() {
@@ -843,11 +904,18 @@ const Scenes = {
   // for typing hello text
   intru: null,
   intruVoice: null,
+  experimentNameIntro: "Foundation Formwork Experiment",
+  experimentNameCertificate: "Foundation Formwork",
+  experimentNameSpeech: "Foundation Formwork",
   steps: [
     (intro = () => {
       // remove all dom element for back and setProcessRunning
       setIsProcessRunning(true);
 
+
+      // ! set The experiment name
+      let welcomeBoxExpName = get(".welcome-box .title span:nth-child(2)")
+      welcomeBoxExpName.innerHTML = Scenes.experimentNameIntro
 
       // starting elements
 
@@ -870,7 +938,9 @@ const Scenes = {
           return;
         }
         // take only first space
-        let fName = student_name.slice(0, student_name.indexOf(" "));
+        let spaceIndex = student_name.indexOf(" ")
+        spaceIndex = spaceIndex == -1 ? student_name.length : spaceIndex + 1 
+        let fName = student_name.slice(0, spaceIndex);
         hide(error);
         let tl = anime.timeline({
           easing: "easeOutExpo",
@@ -901,7 +971,7 @@ const Scenes = {
               Scenes.items.tempText.set(482, 1);
               textToSpeach(`Hey! ${fName}`);
               textToSpeach(
-                "Welcome to Foundation Wall in Foamwork Experiment of Foamwork Technology in Civil Engineering Virtual Lab developed by Prof. K. N. Jha, Department of Civil Engineering, IIT Delhi."
+                `Welcome to ${Scenes.experimentNameSpeech} Experiment of Formwork Technology in Civil Engineering Virtual Lab developed by Professor K N Jha, Department of Civil Engineering, IIT Delhi.`
               );
               Scenes.items.talk_cloud.set(450, -40, 180).push();
               setCC("");
@@ -920,9 +990,8 @@ const Scenes = {
             .add({
               duration: 12000,
               complete() {
-                setCC("Click 'Next' to go to next step");
-                Dom.setBlinkArrow(true, 790, 444).play();
                 setIsProcessRunning(false);
+                Dom.setBlinkArrow(true, 790, 450).play();
             },
           });
       };
@@ -979,9 +1048,7 @@ const Scenes = {
       duration:4000, 
       complete(){
         setIsProcessRunning(false);
-        Dom.setBlinkArrow(true, 790, 444).play();
-        setCC("Click 'Next' to go to next step");
-
+        Dom.setBlinkArrow(true, 790, 450).play();
       }
 
     })
@@ -1154,7 +1221,7 @@ const Scenes = {
           duration: 2000,
           complete(){
             setCC("Click on the 'Form Floor Panel' to add panel in the lab.");      
-            Dom.setBlinkArrow(true, 670,15).play();
+            Scenes.showArrowForMenuItem()
             
           }
         })
@@ -1168,7 +1235,7 @@ const Scenes = {
           duration: 2000,
           complete(){
             setCC("Click on the 'Form Floor Corner' to add corner in the lab.")
-            Dom.setBlinkArrow(true, 670,65);
+            Scenes.showArrowForMenuItem()
           }
         })
       }
@@ -1180,15 +1247,12 @@ const Scenes = {
           easing: "easeInOutQuad",
           duration: 2000,
           complete(){
-            
-            Dom.setBlinkArrow(true, 790, 408).play();
-            setCC("Click 'Next' to go to next step");
             setIsProcessRunning(false);
           }
         })
       }
 
-      setCC("Click on the 'Waler Clip' to add clip in the lab.");
+      Scenes.showArrowForMenuItem()
       Dom.setBlinkArrow(true, 670, -35).play()
       // onclick
       contentAdderBtns[0].onclick = walerClicpAnime
@@ -1196,6 +1260,13 @@ const Scenes = {
       contentAdderBtns[2].onclick = formFloorCornerAinme
       // remove all the previous elements
       // Dom.hideAll();
+      contentAdderBtns.forEach(cab=>{
+        let previousFunction = cab.onclick
+        cab.onclick = ()=>{
+          Dom.setBlinkArrow(-1)
+          previousFunction()
+        }
+      })
       return true;  
 
     }),
@@ -1265,7 +1336,7 @@ const Scenes = {
               top: 89,
               duration: 1000,
               complete(){
-                Dom.setBlinkArrow(true, 710,15).play();
+                Scenes.showArrowForMenuItem()
                 setCC("Click on the 'Floor Panel' to add it in the lab.");
               }
             })
@@ -1295,7 +1366,7 @@ const Scenes = {
               top: 95,
               duration: 2000,
               complete(){
-                Dom.setBlinkArrow(true, 710,65).play();
+                Scenes.showArrowForMenuItem()
                 setCC("Click on the 'Waler Clip' to add it in the lab.");
               }
             })
@@ -1355,7 +1426,7 @@ const Scenes = {
               left: 150,
               top: 230,
               complete(){
-                Dom.setBlinkArrow(true, 710,115).play();
+                Scenes.showArrowForMenuItem()
                 setCC("Click on the 'Repeat' to repeat the above steps.");
               }
             })
@@ -1386,7 +1457,7 @@ const Scenes = {
               left: 150+gap,
               top: 230,
               complete(){
-                Dom.setBlinkArrow(true, 710,115).play();
+                Scenes.repeatShowArrowForMenuItem()
               }
             })
             break;
@@ -1416,7 +1487,7 @@ const Scenes = {
               left: 150+gap,
               top: 230,
               complete(){
-                Dom.setBlinkArrow(true, 710,115).play();
+                Scenes.repeatShowArrowForMenuItem()
               }
             })
             break;
@@ -1447,9 +1518,7 @@ const Scenes = {
                 left: 150+gap,
                 top: 230,
                 complete(){
-                  Quiz.loadQuiz();
-                  Dom.setBlinkArrow(true, 790, 408).play();
-                  setCC("Click 'Next' to go to next step");
+                  // Quiz.loadQuiz();
                   setIsProcessRunning(false);
                 }
               })
@@ -1458,7 +1527,7 @@ const Scenes = {
         walerClipCount++;
       }
             
-      Dom.setBlinkArrow(true, 710, -35).play();
+      Scenes.showArrowForMenuItem()
       setCC("Click on the 'Floor Corner' to add it in the lab.");
       // onclick
       contentAdderBtns[0].onclick = floorCornerAnime;
@@ -1471,7 +1540,13 @@ const Scenes = {
         }
         setTimeout(walerClipAnime,1500);
       };
-
+      contentAdderBtns.forEach(cab=>{
+        let previousFunction = cab.onclick
+        cab.onclick = ()=>{
+          Dom.setBlinkArrow(-1)
+          previousFunction()
+        }
+      })
       //!remove
       // floorCornerAnime()
       // floorPanelAnime()
@@ -1577,7 +1652,7 @@ const Scenes = {
             top: 130,
             duration: 2000,
             complete(){
-              Dom.setBlinkArrow(true,718,15).play()
+              Scenes.showArrowForMenuItem()
               setCC("Click on the 'Pipe Clamp' to add it in the lab.")
             }
           })
@@ -1591,7 +1666,7 @@ const Scenes = {
             top: 215,
             duration: 2000,
             complete(){
-              Dom.setBlinkArrow(true,718,15).play()
+              Scenes.showArrowForMenuItem()
               setCC("Click on the 'Pipe Clamp' to add it in the lab.")
             }
           })
@@ -1628,7 +1703,8 @@ const Scenes = {
             left: 612,
             top: 118,
             complete(){
-              Dom.setBlinkArrow(true,718,-35).play()
+              Scenes.menuItemNumber = 1
+              Scenes.showArrowForMenuItem()
               setCC("Click on the 'Pipe Waler' to add it in the lab.")
             }
           })
@@ -1664,9 +1740,7 @@ const Scenes = {
             left: 612,
             top: 204,
             complete(){
-              Quiz.loadQuiz();
-              Dom.setBlinkArrow(true, 790, 408).play();
-              setCC("Click 'Next' to go to next step");
+              // Quiz.loadQuiz();
               setIsProcessRunning(false);
             }
           })
@@ -1676,12 +1750,18 @@ const Scenes = {
       walerClampCount++;
      }
      
-     Dom.setBlinkArrow(true,718,-35).play()
+     Scenes.showArrowForMenuItem()
      setCC("Click on the 'Pipe Waler' to add it in the lab.")
      //onclick pipe waler 
      contentAdderBtns[0].onclick = pipeWalerAnime;
      contentAdderBtns[1].onclick = walerClampAnime;
-
+     contentAdderBtns.forEach(cab=>{
+      let previousFunction = cab.onclick
+      cab.onclick = ()=>{
+        Dom.setBlinkArrow(-1)
+        previousFunction()
+      }
+    })
      return true;
 
     }),
@@ -1833,7 +1913,7 @@ const Scenes = {
             left:220,
             top:216,
             complete(){
-              Dom.setBlinkArrow(true,680,15).play()
+              Scenes.showArrowForMenuItem()
               setCC("Click on the 'Steel Waler' to attach it with the steel waler connector.")
             }
           })
@@ -1886,7 +1966,7 @@ const Scenes = {
             duration: 1000,
             rotate: 90,
             complete(){
-              Dom.setBlinkArrow(true,680,65).play()
+              Scenes.showArrowForMenuItem()
               setCC("Click on the 'Anchor Plate' to attach it with the steel waler connector.")
             }
           })
@@ -1939,7 +2019,7 @@ const Scenes = {
               {rotate: 360 * rotationCount, duration: 3000}
             ],
             complete(){
-              Dom.setBlinkArrow(true,680,115).play()
+              Scenes.showArrowForMenuItem()
               setCC("Click on the 'Wing Nut' to tighten it.")
             }
           })
@@ -2010,7 +2090,7 @@ const Scenes = {
               {rotate: 360 * rotationCount, duration: 3000}
             ],
             complete(){
-              Dom.setBlinkArrow(true,680,165).play()
+              Scenes.showArrowForMenuItem()
               setCC("Click on the 'Repeat' to repeat the previous steps.")
             }
           })
@@ -2032,7 +2112,10 @@ const Scenes = {
             keyframes: [
               {left:379, top:220,},
               {rotate: 360 * rotationCount, duration: 3000}
-            ]
+            ],
+            complete(){
+              Scenes.repeatShowArrowForMenuItem()
+            }
           })
           break
         case 2:
@@ -2059,11 +2142,8 @@ const Scenes = {
               Scenes.items.larrow2.hide()
               Scenes.items.wing_nut_full.hide()
               Scenes.items.tempTitle1.hide()
-              Quiz.loadQuiz();
+              // Quiz.loadQuiz();
 
-
-              setCC("Click 'Next' to go to next step");
-              Dom.setBlinkArrow(true, 790, 408).play();
               setIsProcessRunning(false);
             }
           })
@@ -2071,7 +2151,7 @@ const Scenes = {
       }
       wingNutCount++;
     }
-    Dom.setBlinkArrow(true,680,-35).play()
+    Scenes.showArrowForMenuItem()
     setCC("Click on the 'Waler Connector' to connect it with the pipe.")
     //onclick
     contentAdderBtns[0].onclick = walerConnectorAnime
@@ -2107,7 +2187,13 @@ const Scenes = {
     }
     
 
-
+    contentAdderBtns.forEach(cab=>{
+      let previousFunction = cab.onclick
+      cab.onclick = ()=>{
+        Dom.setBlinkArrow(-1)
+        previousFunction()
+      }
+    })
 
 
     // setCC("Click 'Next' to go to next step");
@@ -2272,7 +2358,7 @@ const Scenes = {
             top:212,
             complete(){
               setCC("Click on the 'Foot Adapter' to support the CT Prop.")
-              Dom.setBlinkArrow(true,700,15).play()
+              Scenes.showArrowForMenuItem()
             }
           })
           break
@@ -2326,7 +2412,7 @@ const Scenes = {
             duration: 1000,
             complete(){
               setCC("Click on the 'CT Prop' to support the form floor panel.")
-              Dom.setBlinkArrow(true,700,65).play()
+              Scenes.showArrowForMenuItem()
             }
           })
           break
@@ -2384,7 +2470,7 @@ const Scenes = {
               Scenes.items.foot_adapter2.set(510,310,75).zIndex(12)
 
               setCC("Click on the 'Repeat' to repeat the previous steps.")
-              Dom.setBlinkArrow(true,700,115).play()
+              Scenes.showArrowForMenuItem()
             }
           })
           break
@@ -2417,6 +2503,7 @@ const Scenes = {
               //! for image box
               Scenes.items.imageBoxSrc.item.src = "./src/images/real_foot_adapter.png";
               Scenes.items.imageBoxTitle.setContent("Foot Adapter")
+              Scenes.repeatShowArrowForMenuItem()
             }  
           })
           
@@ -2439,12 +2526,8 @@ const Scenes = {
             top:190,
             rotate: 50,
             complete(){
-              Quiz.loadQuiz();
+              // Quiz.loadQuiz();
 
-              
-
-              setCC("Click 'Next' to go to next step");
-              Dom.setBlinkArrow(true, 790, 408).play();
               setIsProcessRunning(false);
             }
           })
@@ -2455,7 +2538,7 @@ const Scenes = {
     }
 
     setCC("Click on the 'Head Adapter' to attach it with steel waler.")
-    Dom.setBlinkArrow(true,700,-35).play()
+    Scenes.showArrowForMenuItem()
     //onclick
     contentAdderBtns[0].onclick = headAdapterAnime
     contentAdderBtns[1].onclick = footAdapterAnime
@@ -2465,7 +2548,13 @@ const Scenes = {
       footAdapterAnime()
       ctPropAnime()
     }
-
+    contentAdderBtns.forEach(cab=>{
+      let previousFunction = cab.onclick
+      cab.onclick = ()=>{
+        Dom.setBlinkArrow(-1)
+        previousFunction()
+      }
+    })
     // setCC("Click 'Next' to go to next step");
     //       Dom.setBlinkArrow(true, 790, 408).play();
     //       setIsProcessRunning(false);
@@ -2507,6 +2596,10 @@ const Scenes = {
         left: 0,
         easing: "easeOutQuad",
         duration: 3000,
+        complete(){
+          setCC("Click on the 'Back Side' to add back side of the foundation.");      
+          Scenes.showArrowForMenuItem()
+        }
       })
     }
     
@@ -2518,6 +2611,10 @@ const Scenes = {
         left: 0,
         easing: "easeOutQuad",
         duration: 3000,
+        complete(){
+          setCC("Click on the 'Right Side' to add right side of the foundation.");      
+          Scenes.showArrowForMenuItem()
+        }
       })
     }
 
@@ -2529,20 +2626,26 @@ const Scenes = {
         easing: "easeOutQuad",
         duration: 3000,
         complete(){
-          Quiz.loadQuiz();
+          // Quiz.loadQuiz();
 
-          setCC("Click 'Next' to go to next step");
-          Dom.setBlinkArrow(true, 790, 408).play();
           setIsProcessRunning(false);
         }
       })
     }
 
+    setCC("Click on the 'Left Side' to add left side of the foundation.");      
+    Scenes.showArrowForMenuItem()
     //onclick
     contentAdderBtns[0].onclick = leftSideAnime
     contentAdderBtns[1].onclick = backSideAnime
     contentAdderBtns[2].onclick = rightSideAnime
-
+    contentAdderBtns.forEach(cab=>{
+      let previousFunction = cab.onclick
+      cab.onclick = ()=>{
+        Dom.setBlinkArrow(-1)
+        previousFunction()
+      }
+    })
     // setCC("Click 'Next' to go to next step");
     //       Dom.setBlinkArrow(true, 790, 408).play();
     //       setIsProcessRunning(false);
@@ -2561,10 +2664,13 @@ const Scenes = {
       Dom.hideAll();
       Scenes.items.contentAdderBox.setContent("");
 
+            let certificateExpName = get(".certificate .student-detail .row span:nth-child(2)")
+      certificateExpName.innerHTML = Scenes.experimentNameCertificate
+
       // get(".btn-save").style.display = "block";
       Scenes.items.btn_save.show().push();
       Dom.setBlinkArrow(-1);
-      setCC("Download it and share with your friends.");
+      setCC("Experiment completed, Download it and share with your friends.");
       // certificate name
       let certificateStuName = get("#certificateStuName");
       certificateStuName.innerHTML = student_name;
@@ -2596,6 +2702,8 @@ const Scenes = {
       this.currentStep++;
       backDrawerItem();
       backProgressBar();
+      // reset menu item for showArrow
+      this.menuItemNumber = 1;
     }
   },
   next() {
@@ -2616,6 +2724,8 @@ const Scenes = {
 }
 
 // Scenes.steps[6](); 
+// stepcalling
+Scenes.currentStep = 0;
 Scenes.next();
 // Scenes.next();
 // Scenes.next();
