@@ -1,39 +1,36 @@
 // * Audio Mute
 let isMute = false;
+let currentSpeechText = "";
 
 // * Current Date
 let cd = new Date();
-var currentDateGlobal = `${cd.getDate()} - ${
-  cd.getMonth() + 1
-} - ${cd.getFullYear()}`;
- ;
-
+var currentDateGlobal = `${cd.getDate()} - ${cd.getMonth() + 1} - ${cd.getFullYear()}`;
 // * Quiz object
 const Quiz = {
   quizData: [
     {
-      "question": "What is the main benefit of using aluminum formwork for multi-story buildings?",
-      "a": "High thermal resistance",
-      "b": "Fast assembly and disassembly",
-      "c": "Limited reuse value",
-      "d": "High weight ",
-      "correct": "b"
+      question: "What is the main benefit of using aluminum formwork for multi-story buildings?",
+      a: "High thermal resistance",
+      b: "Fast assembly and disassembly",
+      c: "Limited reuse value",
+      d: "High weight ",
+      correct: "b",
     },
     {
-      "question": "What is a key factor in choosing formwork materials for tall structures?",
-      "a": "Flexibility",
-      "b": "High weight",
-      "c": "Durability and rigidity",
-      "d": "Low cost ",
-      "correct": "c"
+      question: "What is a key factor in choosing formwork materials for tall structures?",
+      a: "Flexibility",
+      b: "High weight",
+      c: "Durability and rigidity",
+      d: "Low cost ",
+      correct: "c",
     },
     {
-      "question": "Which formwork system is best suited for casting continuous walls and vertical elements?",
-      "a": "Tunnel formwork",
-      "b": "Flying formwork",
-      "c": "Slipform",
-      "d": "Modular formwork ",
-      "correct": "c"
+      question: "Which formwork system is best suited for casting continuous walls and vertical elements?",
+      a: "Tunnel formwork",
+      b: "Flying formwork",
+      c: "Slipform",
+      d: "Modular formwork ",
+      correct: "c",
     },
   ],
   quiz_contianer: document.querySelector(".quiz-container"),
@@ -49,14 +46,20 @@ const Quiz = {
   loadQuizCallCount: 0,
   currentQuiz: 0,
   score: 0,
+  completedSteps: [],
+  currentStepId: null,
   loadQuiz() {
+    const stepId = Scenes.currentStep;
+    if (this.completedSteps.includes(stepId)) {
+      return;
+    }
+    this.currentStepId = stepId;
 
-    
     if (this.currentQuiz >= this.quizData.length) {
       return;
     }
     document.querySelector(".transparent-box").style.display = "block";
-    this.loadQuizCallCount++;
+    this.loadQuizCallCount = this.currentQuiz + 1;
     window.speechSynthesis.cancel();
     setCC("Choose the correct answer.");
     this.deselectAnswers();
@@ -76,15 +79,13 @@ const Quiz = {
       if (answerEl.checked) {
         answer = answerEl.id;
       }
-
     });
     this.answerEls.forEach((answerEl) => {
       if (answer != undefined) {
         answerEl.disabled = true;
       }
-
     });
-    
+
     return answer;
   },
 
@@ -104,17 +105,14 @@ const Quiz = {
     // this.ansDom.style.display = "none";
   },
   init() {
-    let okBtn = document.getElementById("quizSubmit") ;
+    let okBtn = document.getElementById("quizSubmit");
     okBtn.textContent = "Submit";
     // onclick for quiz close btn
     // document.querySelector("#closeQuiz").onclick = () => {
     //   this.close();
     // };
     // onclick for quiz submit btn
-    document.getElementById("quizSubmit").onclick = ()=> {
-
-
-      
+    document.getElementById("quizSubmit").onclick = () => {
       // for disable multiple submit
       if (this.loadQuizCallCount - 1 !== this.currentQuiz) {
         return;
@@ -145,10 +143,14 @@ const Quiz = {
         //for ok button
 
         okBtn.textContent = "Ok";
-        okBtn.onclick = function(){
+        okBtn.onclick = function () {
+          if (Quiz.currentStepId !== null) {
+            Quiz.completedSteps.push(Quiz.currentStepId);
+            Quiz.currentStepId = null;
+          }
           Quiz.close();
           Quiz.init();
-        }                                                                                                                      
+        };
 
         // to stop the next question
         // if (this.currentQuiz < this.quizData.length) {
@@ -161,7 +163,7 @@ const Quiz = {
         // }
       }
       // this.close();
-    }
+    };
   },
 };
 
@@ -191,7 +193,7 @@ const ChartGraph = {
   delete: function () {
     this.ctxBox.style.display = "none";
     this.currGr.destroy();
-   },
+  },
   view: function (num, left, top, height = null, width = null) {
     if (height != null) this.ctxBox.style.height = height + "px!important";
     if (width != null) this.ctxBox.style.width = width + "px!important";
@@ -216,7 +218,7 @@ const ChartGraph = {
           // },
         ],
       },
-      options: { 
+      options: {
         borderWidth: 3,
         scales: {
           y: {
@@ -238,31 +240,30 @@ let isPerformNext = false;
 let isRunning = false;
 // to set isProcessRunning and also sync the progressbar + drawer
 // ! and toggle the next btn active / deactive
-function toggleNextBtn(){
-  let nextBtn = document.querySelector(".btn-next")
-  nextBtn.classList.toggle("btn-deactive")
-}
+function toggleNextBtn() {
+  let nextBtn = document.querySelector(".btn-next");
+    nextBtn.classList.toggle("btn-deactive");
+  }
 const setIsProcessRunning = (value) => {
   // calling toggle the next
-  if(value != isRunning){
-    toggleNextBtn()
+  if (value != isRunning) {
+    toggleNextBtn();
   }
   // the step is ended
-  if(!value){
-    // reset showArrowMenuItemNumber 
-    Scenes.menuItemNumber = 1
+  if (!value) {
+    // reset showArrowMenuItemNumber
+    Scenes.menuItemNumber = 1;
     setCC("Click 'Next' to go to next step");
     get(".blinkArrow").classList.add("bright");
     Dom.setBlinkArrow(true, 790, 415).play();
-    Scenes.activeAllMenuItems()
+    // Scenes.activeAllMenuItems();
   }
   isRunning = value;
-  if(value){
-    Dom.hideAll()
+  if (value) {
+    Dom.hideAll();
     get(".blinkArrow").classList.remove("bright");
     window.speechSynthesis.cancel();
-    if(ccQueue)
-      ccQueue = []
+    if (ccQueue) ccQueue = [];
   }
 };
 
@@ -313,46 +314,53 @@ let student_name = "";
 
 // ! text to audio
 
-const 
-
-
-textToSpeach = (text) => {
-  // if(isMute){
-  //   return;
-  // }
+const textToSpeach = (text) => {
   let utterance = new SpeechSynthesisUtterance();
   utterance.text = text;
   utterance.voice = window.speechSynthesis.getVoices()[0];
+  if (isMute) {
+    utterance.rate = 10;
+    utterance.volume = 0;
+  } else {
+    // Sync speech rate with animation speed (1x = 1 rate, up to 2x)
+    utterance.rate = Math.min(2, anime.speed || 1);
+  }
   window.speechSynthesis.speak(utterance);
   return utterance;
 };
 
-//queue for 
+//queue for
 let ccQueue = [];
 // for subtitile
 let ccObj = null;
 function setCC(text = null, speed = null) {
+  currentSpeechText = text;
   if (ccObj != null) {
     ccObj.destroy();
+    ccObj = null;
   }
-  
+
   let ccDom = get(".steps-subtitle .subtitle");
+  if (!text || text.trim() === "") {
+    ccDom.innerHTML = "";
+    ccQueue = [];
+    return ccDom;
+  }
   ccQueue.push(text);
   ccObj = new Typed(ccDom, {
     strings: ["", ...ccQueue],
-    typeSpeed: 25,
-    onStringTyped(){
-       ;
+    typeSpeed: 25 / (anime.speed || 1),
+    onStringTyped() {
       ccQueue.shift();
       // if(ccQueue.length != 0){
       //   setCC(ccQueue.shift())
       // }
-    }
+    },
   });
   if (!isMute) textToSpeach(text);
   return ccDom;
 }
-   
+
 class Dom {
   constructor(selector) {
     this.item = null;
@@ -361,14 +369,12 @@ class Dom {
     } else {
       this.item = src.get(selector);
     }
-    this.selector = selector
+    this.selector = selector;
     // push
   }
-  hidden(isHidden){
-    if(isHidden == false)
-      this.item.style.visibility = "visible"
-    else
-      this.item.style.visibility = "hidden"
+  hidden(isHidden) {
+    if (isHidden == false) this.item.style.visibility = "visible";
+    else this.item.style.visibility = "hidden";
   }
   setContent(text) {
     this.item.innerHTML = text;
@@ -393,35 +399,29 @@ class Dom {
   get() {
     return this.item;
   }
-  set(
-    left = null,
-    top = null,
-    height = null,
-    width = null,
-    bottom = null,
-    right = null,
-    disp = "block"
-  ) {
+  cursor(type = "pointer") {
+    this.item.style.cursor = type;
+    return this;
+  }
+  set(left = null, top = null, height = null, width = null, bottom = null, right = null, disp = "block") {
     //! push for every element
-    this.push()
+    this.push();
 
     // coordinates
-    this.left = left
-    this.top = top
-    this.bottom = bottom
-    this.right = right
-    this.height = height
-    this.width = width
-    this.item.style.opacity = 1
-    this.item.style.transform = "translateX(0) translateY(0)"
+    this.left = left;
+    this.top = top;
+    this.bottom = bottom;
+    this.right = right;
+    this.height = height;
+    this.width = width;
+    this.item.style.opacity = 1;
+    this.item.style.transform = "translateX(0) translateY(0)";
 
     if (this.left !== null) this.item.style.left = String(this.left) + "px";
     if (this.top !== null) this.item.style.top = String(this.top) + "px";
-    if (this.bottom !== null)
-      this.item.style.bottom = String(this.bottom) + "px";
+    if (this.bottom !== null) this.item.style.bottom = String(this.bottom) + "px";
     if (this.right !== null) this.item.style.right = String(this.right) + "px";
-    if (this.height !== null)
-      this.item.style.height = String(this.height) + "px";
+    if (this.height !== null) this.item.style.height = String(this.height) + "px";
     if (this.width !== null) this.item.style.width = String(this.width) + "px";
     this.show(disp);
     return this;
@@ -443,43 +443,40 @@ class Dom {
   // * static elements/objects of anime
   static arrayOfAnimes = [];
   static arrayOfItems = [];
-  static animePush(animeObj){
+  static animePush(animeObj) {
     Dom.arrayOfAnimes.push(animeObj);
   }
-  static resetAnimeItems(){
+  static resetAnimeItems() {
     Dom.arrayOfAnimes = [];
   }
   static hideAll() {
     //to empty the setCC
     setCC("");
+    if (typeof Scenes !== "undefined" && Scenes.intru) {
+      Scenes.intru.destroy();
+      Scenes.intru = null;
+    }
+
     // to delete all content of content adder menu
-    Scenes.items.contentAdderBox.setContent("");
+    if (typeof Scenes !== "undefined") {
+      Scenes.items.contentAdderBox.setContent("");
+    }
     for (let i of Dom.arrayOfItems) {
       i.hide();
       i.opacity();
     }
     // * reset animes
-    for (let i of Dom.arrayOfAnimes){
+    for (let i of Dom.arrayOfAnimes) {
       // to reset each anime after back btn pressed
       i.reset();
-    } 
+    }
     Dom.resetItems();
   }
   static resetItems() {
     Dom.arrayOfItems = [];
   }
-  static setBlinkArrow(
-    isX = true,
-    left = null,
-    top = null,
-    height = 60,
-    width = null,
-    rotate = 0
-  ) {
-    let blinkArrow = new Dom("blinkArrow")
-      .set(left, top, height, width)
-      .rotate(rotate)
-      .zIndex(200);
+  static setBlinkArrow(isX = true, left = null, top = null, height = 60, width = null, rotate = 0) {
+    let blinkArrow = new Dom("blinkArrow").set(left, top, height, width).rotate(rotate).zIndex(200);
     if (isX === -1) {
       blinkArrow.hide();
       return;
@@ -502,12 +499,12 @@ class Dom {
       autoplay: false,
       duration: 300,
     });
+    Dom.animePush(blink);
 
     return blink;
   }
   push() {
-    if(this.selector != ".anime-header")
-      Dom.arrayOfItems.push(this);
+    if (this.selector != ".anime-header") Dom.arrayOfItems.push(this);
     return this;
   }
 }
@@ -703,6 +700,8 @@ const Scenes = {
     tempTitle10: new Dom(".temp-title10"),
     tempTitle11: new Dom(".temp-title11"),
     tempTitle12: new Dom(".temp-title12"),
+    tempTitle13: new Dom(".temp-title13"),
+    tempTitle14: new Dom(".temp-title14"),
     contentAdderBox: new Dom(".content-adder-box"),
     btn_save: new Dom(".btn-save"),
     btn_next: new Dom(".btn-next"),
@@ -810,9 +809,6 @@ const Scenes = {
     wing_nut_full: new Dom("wing_nut_full"),
     real_head_adapter: new Dom("real_head_adapter"),
     real_foot_adapter: new Dom("real_foot_adapter"),
-    
-    
-
   },
   deleteAll() {
     for (i in this.img) {
@@ -831,42 +827,45 @@ const Scenes = {
   },
   // ! Show arrow according to menu item number
   menuItemNumber: 1,
-  showArrowForMenuItem(repeat=false){
-    if(repeat){
+  showArrowForMenuItem(repeat = false) {
+    if (repeat) {
       this.menuItemNumber--;
     }
-    this.disableInvalidMenuItemsClick()
+    this.disableInvalidMenuItemsClick();
 
-    let menuLeftOffset = get(".content-adder-box").offsetLeft
-    let gapArrowWith = 71
+    let menuLeftOffset = get(".content-adder-box").offsetLeft;
+    let gapArrowWith = 71;
 
-    this.leftGap = menuLeftOffset - gapArrowWith
+    this.leftGap = menuLeftOffset - gapArrowWith;
 
-    let initialFixedTop = -35
-    let gapTopFixed = 50
-    let finalTop = initialFixedTop
+    let initialFixedTop = -35;
+    let gapTopFixed = 50;
+    let finalTop = initialFixedTop;
 
-    for(let i=1;i< this.menuItemNumber;i++){
-      finalTop+=gapTopFixed 
+    for (let i = 1; i < this.menuItemNumber; i++) {
+      finalTop += gapTopFixed;
     }
 
-    this.menuItemNumber++
-    Dom.setBlinkArrow(true, this.leftGap, finalTop).play()
+    this.menuItemNumber++;
+    Dom.setBlinkArrow(true, this.leftGap, finalTop).play();
   },
   // ! to disable menu item clicks
-  disableInvalidMenuItemsClick(){
-    let allMenuItems = getAll(".content-adder-box li")
-    allMenuItems.forEach(menuItem => {
-      menuItem.style.pointerEvents = "none"
-    })
+  disableInvalidMenuItemsClick() {
+    let allMenuItems = getAll(".content-adder-box li");
+    allMenuItems.forEach((menuItem) => {
+      menuItem.style.pointerEvents = "none";
+    });
 
-    allMenuItems[this.menuItemNumber - 1].style.pointerEvents = ""
+    allMenuItems[this.menuItemNumber - 1].style.pointerEvents = "";
   },
-  activeAllMenuItems(){
-    getAll(".content-adder-box li").forEach(item=>item.style.pointerEvents = "")
+  activeAllMenuItems() {
+    getAll(".content-adder-box li").forEach((item) => (item.style.pointerEvents = ""));
   },
-  repeatShowArrowForMenuItem(){
-    this.showArrowForMenuItem(true)
+  lockAllMenuItems() {
+    getAll(".content-adder-box li").forEach((item) => (item.style.pointerEvents = "none"));
+  },
+  repeatShowArrowForMenuItem() {
+    this.showArrowForMenuItem(true);
   },
   currentStep: 0,
   subCurrentStep: 0,
@@ -892,10 +891,9 @@ const Scenes = {
       // remove all dom element for back and setProcessRunning
       setIsProcessRunning(true);
 
-
       // ! set The experiment name
-      let welcomeBoxExpName = get(".welcome-box .title span:nth-child(2)")
-      welcomeBoxExpName.innerHTML = Scenes.experimentNameIntro
+      let welcomeBoxExpName = get(".welcome-box .title span:nth-child(2)");
+      welcomeBoxExpName.innerHTML = Scenes.experimentNameIntro;
 
       // starting elements
 
@@ -908,6 +906,7 @@ const Scenes = {
       show(inputWindow, "flex");
       let man = new Dom("man").set(650, 80).push();
 
+      new Dom(".user-input").push();
       let submitBtn = get("#nameSubmitBtn");
       submitBtn.onclick = () => {
         student_name = get("#stuName").value;
@@ -918,8 +917,8 @@ const Scenes = {
           return;
         }
         // take only first space
-        let spaceIndex = student_name.indexOf(" ")
-        spaceIndex = spaceIndex == -1 ? student_name.length : spaceIndex + 1 
+        let spaceIndex = student_name.indexOf(" ");
+        spaceIndex = spaceIndex == -1 ? student_name.length : spaceIndex + 1;
         let fName = student_name.slice(0, spaceIndex);
         hide(error);
         let tl = anime.timeline({
@@ -944,9 +943,10 @@ const Scenes = {
               // Scenes.items.tempText.innerHTML = `👋 Hey!<br>${fName}`;
               Scenes.items.tempText.item.style.fontWeight = "bold";
               // show(Scenes.items.tempText);
-              intru = new Typed(Scenes.items.tempText.item, {
+              Scenes.intru = new Typed(Scenes.items.tempText.item, {
                 strings: ["", `Hey!👋<br>${fName}`],
                 typeSpeed: 25,
+                showCursor: false,
               });
               Scenes.items.tempText.set(482, 1);
               textToSpeach(`Hey! ${fName}`);
@@ -960,18 +960,21 @@ const Scenes = {
             opacity: [0, 1],
           })
           .add({
-            begin(){
-               // to hide previous step images
-               intru.destroy();
-               Dom.hideAll();
+            begin() {
+              // to hide previous step images
+              if (Scenes.intru) {
+                Scenes.intru.destroy();
+                Scenes.intru = null;
+              }
+              Dom.hideAll();
               Scenes.items.welcomeBox.show("flex");
-            }
+            },
           })
-            .add({
-              duration: 12000,
-              complete() {
-                setIsProcessRunning(false);
-                Dom.setBlinkArrow(true, 790, 450).play();
+          .add({
+            duration: 12000,
+            complete() {
+              setIsProcessRunning(false);
+              Dom.setBlinkArrow(true, 790, 450).play();
             },
           });
       };
@@ -979,7 +982,7 @@ const Scenes = {
     }),
     (objective = function () {
       setIsProcessRunning(true);
-      Dom.hideAll()
+      Dom.hideAll();
 
       // to stop current voice
       window.speechSynthesis.cancel();
@@ -987,53 +990,54 @@ const Scenes = {
       Scenes.items.welcomeBox.hide();
       Dom.setBlinkArrow(-1);
       setCC("");
-      
+
       // * Required Items
       Scenes.items.projectIntro.show().push();
 
-      Scenes.items.panel1.set(37,159)
-      Scenes.items.tempTitle1.set(37,400).setContent("(Form Floor Panel)")
-      
-      Scenes.items.form_floor_corner1.set(306,159)
-      Scenes.items.tempTitle2.set(247,405).setContent("(Form Floor Corner)")
-      
-      Scenes.items.steel_waler1.set(306,270,40,240).rotate(90)
-      Scenes.items.tempTitle3.set(380,150).setContent("(Steel Waler)")
-      
-      Scenes.items.ct_prop1.set(480,170,240)
-      Scenes.items.tempTitle4.set(470,410).setContent("(CT Prop)")
-      
-      Scenes.items.waler_clip1.set(570,170,50)
-      Scenes.items.tempTitle5.set(550,220).setContent("(Waler Clip)")
-      
-      Scenes.items.steel_waler_connector1.set(690,140,50)
-      Scenes.items.tempTitle6.set(649,190).setContent("(Waler Connector)")
-      
-      Scenes.items.anchor_plate1.set(820,170,50)
-      Scenes.items.tempTitle7.set(801,220).setContent("(Anchor Plate)")
-      
-      Scenes.items.pipe_waler_clamp_full.set(570,260,50)
-      Scenes.items.tempTitle8.set(530,320).setContent("(Pipe Waler Clamp)")
-      
-      Scenes.items.foot_adapter1.set(690,200,80)
-      Scenes.items.tempTitle9.set(680,280).setContent("(Foot Adapter)")
-      
-      Scenes.items.wing_nut_full.set(820,260,50)
-      Scenes.items.tempTitle10.set(810,310).setContent("(Wing Nut)")
-      
-      Scenes.items.pipe_waler_cutout1.set(570,360,20,330)
-      Scenes.items.tempTitle11.set(689,380).setContent("(Waler Pipe)")
+      Scenes.items.panel1.set(37, 159);
+      Scenes.items.tempTitle1.set(37, 400).setContent("(Form Floor Panel)");
 
-    anime({
-      duration:4000, 
-      complete(){
-        setIsProcessRunning(false);
-        Dom.setBlinkArrow(true, 790, 450).play();
-      }
+      Scenes.items.form_floor_corner1.set(306, 159);
+      Scenes.items.tempTitle2.set(247, 405).setContent("(Form Floor Corner)");
 
-    })
-    return true;
-  }),
+      Scenes.items.steel_waler1.set(306, 270, 40, 240).rotate(90);
+      Scenes.items.tempTitle3.set(380, 150).setContent("(Steel Waler)");
+
+      Scenes.items.ct_prop1.set(480, 170, 240);
+      Scenes.items.tempTitle4.set(470, 410).setContent("(CT Prop)");
+
+      Scenes.items.waler_clip1.set(570, 170, 50);
+      Scenes.items.tempTitle5.set(550, 220).setContent("(Waler Clip)");
+
+      Scenes.items.steel_waler_connector1.set(690, 140, 50);
+      Scenes.items.tempTitle6.set(649, 190).setContent("(Waler Connector)");
+
+      Scenes.items.anchor_plate1.set(820, 170, 50);
+      Scenes.items.tempTitle7.set(801, 220).setContent("(Anchor Plate)");
+
+      Scenes.items.pipe_waler_clamp_full.set(570, 260, 50);
+      Scenes.items.tempTitle8.set(530, 320).setContent("(Pipe Waler Clamp)");
+
+      Scenes.items.foot_adapter1.set(690, 200, 80);
+      Scenes.items.tempTitle9.set(680, 280).setContent("(Foot Adapter)");
+
+      Scenes.items.wing_nut_full.set(820, 260, 50);
+      Scenes.items.tempTitle10.set(810, 310).setContent("(Wing Nut)");
+
+      Scenes.items.pipe_waler_cutout1.set(570, 360, 20, 330);
+      Scenes.items.tempTitle11.set(689, 380).setContent("(Waler Pipe)");
+
+      Dom.animePush(
+        anime({
+          duration: 4000,
+          complete() {
+            setIsProcessRunning(false);
+            Dom.setBlinkArrow(true, 790, 450).play();
+          },
+        })
+      );
+      return true;
+    }),
     (step1 = function () {
       setIsProcessRunning(true);
       // to hide previous step
@@ -1041,131 +1045,167 @@ const Scenes = {
       Dom.setBlinkArrow(-1);
 
       Scenes.setStepHeading("Step 1", "Marking the area (Diagonally and rectangularly)");
-      Scenes.items.land.set(0,0,404,950)
+      Scenes.items.land.set(0, 0, 404, 950);
 
-      Scenes.items.chalk_with_hand.set(170,3,80,70).zIndex(6)
-      
-      Scenes.items.chalk_markings1.set(170,18,6,600).zIndex(5)
-      Scenes.items.marking_surface1.set(170,18,8,600).zIndex(5)
+      Scenes.items.chalk_with_hand.set(170, 3, 80, 70).zIndex(6).cursor();
 
-      Scenes.items.chalk_markings2.set(600,182,6,334).rotate(90).zIndex(5)
-      Scenes.items.marking_surface2.set(600,182,8,334).rotate(90).zIndex(5)
+      Scenes.items.chalk_markings1.set(170, 18, 6, 600).zIndex(5);
+      Scenes.items.marking_surface1.set(170, 18, 8, 600).zIndex(5);
 
-      Scenes.items.chalk_markings3.set(170,350,6,600).zIndex(5)
-      Scenes.items.marking_surface3.set(170,350,8,600).zIndex(5)
+      Scenes.items.chalk_markings2.set(600, 182, 6, 334).rotate(90).zIndex(5);
+      Scenes.items.marking_surface2.set(600, 182, 8, 334).rotate(90).zIndex(5);
 
-      Scenes.items.chalk_markings4.set(5,182,6,334).rotate(90).zIndex(4)
-      Scenes.items.marking_surface4.set(5,182,8,334).rotate(90).zIndex(4)
+      Scenes.items.chalk_markings3.set(170, 350, 6, 600).zIndex(5);
+      Scenes.items.marking_surface3.set(170, 350, 8, 600).zIndex(5);
 
-      Scenes.items.chalk_markings5.set(130,184,6,680).rotate(29).zIndex(3)
-      Scenes.items.marking_surface5.set(130,184,8,680).rotate(29).zIndex(3)
+      Scenes.items.chalk_markings4.set(5, 182, 6, 334).rotate(90).zIndex(4);
+      Scenes.items.marking_surface4.set(5, 182, 8, 334).rotate(90).zIndex(4);
 
-      Scenes.items.chalk_markings6.set(130,185,6,680).rotate(-29).zIndex(2)
-      Scenes.items.marking_surface6.set(130,185,8,680).rotate(-29).zIndex(2)
+      Scenes.items.chalk_markings5.set(130, 184, 6, 680).rotate(29).zIndex(3);
+      Scenes.items.marking_surface5.set(130, 184, 8, 680).rotate(29).zIndex(3);
 
-      Scenes.items.tempTitle1.set(788,198).setContent("2400mm").hidden()
-      Scenes.items.tempTitle2.set(455,364).setContent("2700mm").hidden()
+      Scenes.items.chalk_markings6.set(130, 185, 6, 680).rotate(-29).zIndex(2);
+      Scenes.items.marking_surface6.set(130, 185, 8, 680).rotate(-29).zIndex(2);
 
-      setCC("Click on the hand to mark the area rectangularly.")
-      Dom.setBlinkArrow(true,90,0).play()
+      Scenes.items.tempTitle13.set(788, 198).setContent("2400mm").hidden();
+      Scenes.items.tempTitle14.set(455, 364).setContent("2700mm").hidden();
+
+      setCC("Click on the hand to mark the area rectangularly.");
+      Dom.setBlinkArrow(true, 90, 0).play();
       // onclick
-      Scenes.items.chalk_with_hand.item.onclick = ()=>{
+      Scenes.items.chalk_with_hand.item.onclick = () => {
         Dom.setBlinkArrow(-1);
 
-        anime.timeline({
-          easing: "easeOutExpo"
-        })
-        .add({
-          begin(){
-            Scenes.items.anime_main_dom.item.style.overflow = "hidden";
-          },
-          targets: [Scenes.items.chalk_with_hand.item,Scenes.items.marking_surface1.item],
-          left: 770,
-          duration: 3000,
-        })
-        .add({
-          begin(){
-            setCC("Marking the vertical length of 2400mm")
-          },
-          targets: [Scenes.items.chalk_with_hand.item],
-          top: 334,
-          duration: 3000,
-          complete(){
-            Scenes.items.tempTitle1.hidden(false)
-          }
-        },3000)// marking of right vertical surface
-        .add({
-          targets: [Scenes.items.marking_surface2.item],
-          top: 516,
-          duration: 3000,
-        },3000)
-        .add({
-          begin(){
-            setCC("Marking the horizontal length of 2700mm")
-          },
-          targets: [Scenes.items.marking_surface3.item],
-          left: -430,
-          duration: 3000,
-          complete(){
-            Scenes.items.tempTitle2.hidden(false)
-          }
-        },6000)
-        .add({
-          targets: [Scenes.items.chalk_with_hand.item],
-          left: 170,
-          duration: 3000,
-        },6000)
-        .add({
-          targets: [Scenes.items.chalk_with_hand.item],
-          top: 4,
-          duration: 3000,
-        },9000)// marking of left vertical surface
-        .add({
-          targets: [Scenes.items.marking_surface4.item],
-          top: -152,
-          duration: 3000,
-        },9000)
-        .add({
-          targets: [Scenes.items.marking_surface4.item],
-          top: -152,
-          duration: 3000,
-        },9000)
-        .add({
-          targets: [Scenes.items.chalk_with_hand.item],
-          left: 770,
-          top: 338,
-          duration: 3000,
-        },12000)
-        .add({
-          targets: [Scenes.items.marking_surface5.item],
-          translateX: 700,
-          duration: 3000,
-        },12000)
-        .add({
-          begin(){
-            Scenes.items.chalk_with_hand.set(770,3)
-          },
-          endDelay: 500,
-        })
-        .add({
-          targets: [Scenes.items.chalk_with_hand.item],
-          translateX: -605,
-          translateY: 335,
-          duration: 3000,
-        },15500)
-        .add({
-          targets: [Scenes.items.marking_surface6.item],
-          translateX: -680,
-          duration: 3000,
-          complete(){
-            Dom.setBlinkArrow(true, 790, 408).play()
-            // Quiz.loadQuiz()
-            setCC("Click 'Next' to go to next step")
-            setIsProcessRunning(false)
-          }
-        },15500)
-      }
-      return true
+        Dom.animePush(
+          anime
+            .timeline({
+              easing: "easeOutExpo",
+            })
+            .add({
+              begin() {
+                Scenes.items.anime_main_dom.item.style.overflow = "hidden";
+              },
+              targets: [Scenes.items.chalk_with_hand.item, Scenes.items.marking_surface1.item],
+              left: 770,
+              duration: 3000,
+            })
+            .add(
+              {
+                begin() {
+                  setCC("Marking the vertical length of 2400mm");
+                },
+                targets: [Scenes.items.chalk_with_hand.item],
+                top: 334,
+                duration: 3000,
+                complete() {
+                  Scenes.items.tempTitle1.hidden(false);
+                },
+              },
+              3000
+            ) // marking of right vertical surface
+            .add(
+              {
+                targets: [Scenes.items.marking_surface2.item],
+                top: 516,
+                duration: 3000,
+              },
+              3000
+            )
+            .add(
+              {
+                begin() {
+                  setCC("Marking the horizontal length of 2700mm");
+                },
+                targets: [Scenes.items.marking_surface3.item],
+                left: -430,
+                duration: 3000,
+                complete() {
+                  Scenes.items.tempTitle2.hidden(false);
+                },
+              },
+              6000
+            )
+            .add(
+              {
+                targets: [Scenes.items.chalk_with_hand.item],
+                left: 170,
+                duration: 3000,
+              },
+              6000
+            )
+            .add(
+              {
+                targets: [Scenes.items.chalk_with_hand.item],
+                top: 4,
+                duration: 3000,
+              },
+              9000
+            ) // marking of left vertical surface
+            .add(
+              {
+                targets: [Scenes.items.marking_surface4.item],
+                top: -152,
+                duration: 3000,
+              },
+              9000
+            )
+            .add(
+              {
+                targets: [Scenes.items.marking_surface4.item],
+                top: -152,
+                duration: 3000,
+              },
+              9000
+            )
+            .add(
+              {
+                targets: [Scenes.items.chalk_with_hand.item],
+                left: 770,
+                top: 338,
+                duration: 3000,
+              },
+              12000
+            )
+            .add(
+              {
+                targets: [Scenes.items.marking_surface5.item],
+                translateX: 700,
+                duration: 3000,
+              },
+              12000
+            )
+            .add({
+              begin() {
+                Scenes.items.chalk_with_hand.set(770, 3);
+              },
+              endDelay: 500,
+            })
+            .add(
+              {
+                targets: [Scenes.items.chalk_with_hand.item],
+                translateX: -605,
+                translateY: 335,
+                duration: 3000,
+              },
+              15500
+            )
+            .add(
+              {
+                targets: [Scenes.items.marking_surface6.item],
+                translateX: -680,
+                duration: 3000,
+                complete() {
+                  Dom.setBlinkArrow(true, 790, 408).play();
+                  // Quiz.loadQuiz()
+                  setCC("Click 'Next' to go to next step");
+                  setIsProcessRunning(false);
+                },
+              },
+              15500
+            )
+        );
+      };
+      return true;
     }),
     (step2 = function () {
       // ! fixing the overflow
@@ -1177,78 +1217,83 @@ const Scenes = {
       setIsProcessRunning(true);
 
       Dom.setBlinkArrow(-1);
-      
-      Scenes.setStepHeading("Step 2", "Bring the form floor corner, form floor panel and waler clip in the lab")
 
-      Scenes.items.panel1.set()
-            
-      Scenes.items.contentAdderBox.set(null,-50).show("flex").push()
-      Scenes.contentAdderAddBtn("Waler Clip")
-      Scenes.contentAdderAddBtn("Form Floor Panel")
-      Scenes.contentAdderAddBtn("Form Floor Corner")
+      Scenes.setStepHeading("Step 2", "Bring the form floor corner, form floor panel and waler clip in the lab");
 
-      let contentAdderBtns = getAll(".content-adder-box .btn")
+      Scenes.items.panel1.set();
 
-      Scenes.items.form_floor_corner1.set(-50,75)
-      Scenes.items.panel1.set(-250,75)
-      Scenes.items.waler_clip1.set(-50,252,50)
+      Scenes.items.contentAdderBox.set(null, -50).show("flex").push();
+      Scenes.contentAdderAddBtn("Waler Clip");
+      Scenes.contentAdderAddBtn("Form Floor Panel");
+      Scenes.contentAdderAddBtn("Form Floor Corner");
 
-      function walerClicpAnime(){
-        anime({
-          targets: Scenes.items.waler_clip1.item,
-          left: 556,
-          easing: "easeInOutQuad",
-          duration: 2000,
-          complete(){
-            setCC("Click on the 'Form Floor Panel' to add panel in the lab.");      
-            Scenes.showArrowForMenuItem()
-            
-          }
-        })
+      let contentAdderBtns = getAll(".content-adder-box .btn");
+
+      Scenes.items.form_floor_corner1.set(-50, 75);
+      Scenes.items.panel1.set(-250, 75);
+      Scenes.items.waler_clip1.set(-50, 252, 50);
+      setCC("Click on the 'Waler Clip' to add it in the lab.");
+
+      function walerClicpAnime() {
+        Dom.animePush(
+          anime({
+            targets: Scenes.items.waler_clip1.item,
+            left: 556,
+            easing: "easeInOutQuad",
+            duration: 2000,
+            complete() {
+              setCC("Click on the 'Form Floor Panel' to add panel in the lab.");
+              Scenes.showArrowForMenuItem();
+            },
+          })
+        );
       }
 
-      function formFloorPanelAnime(){
-        anime({
-          targets: Scenes.items.panel1.item,
-          left: 245,
-          easing: "easeInOutQuad",
-          duration: 2000,
-          complete(){
-            setCC("Click on the 'Form Floor Corner' to add corner in the lab.")
-            Scenes.showArrowForMenuItem()
-          }
-        })
+      function formFloorPanelAnime() {
+        Dom.animePush(
+          anime({
+            targets: Scenes.items.panel1.item,
+            left: 245,
+            easing: "easeInOutQuad",
+            duration: 2000,
+            complete() {
+              setCC("Click on the 'Form Floor Corner' to add corner in the lab.");
+              Scenes.showArrowForMenuItem();
+            },
+          })
+        );
       }
 
-      function formFloorCornerAinme(){
-        anime({
-          targets: Scenes.items.form_floor_corner1.item,
-          left: 73,
-          easing: "easeInOutQuad",
-          duration: 2000,
-          complete(){
-            setIsProcessRunning(false);
-          }
-        })
+      function formFloorCornerAinme() {
+        Dom.animePush(
+          anime({
+            targets: Scenes.items.form_floor_corner1.item,
+            left: 73,
+            easing: "easeInOutQuad",
+            duration: 2000,
+            complete() {
+              setIsProcessRunning(false);
+            },
+          })
+        );
       }
 
-      Scenes.showArrowForMenuItem()
-      Dom.setBlinkArrow(true, 670, -35).play()
+      Scenes.showArrowForMenuItem();
+      Dom.setBlinkArrow(true, 670, -35).play();
       // onclick
-      contentAdderBtns[0].onclick = walerClicpAnime
-      contentAdderBtns[1].onclick = formFloorPanelAnime
-      contentAdderBtns[2].onclick = formFloorCornerAinme
+      contentAdderBtns[0].onclick = walerClicpAnime;
+      contentAdderBtns[1].onclick = formFloorPanelAnime;
+      contentAdderBtns[2].onclick = formFloorCornerAinme;
       // remove all the previous elements
       // Dom.hideAll();
-      contentAdderBtns.forEach(cab=>{
-        let previousFunction = cab.onclick
-        cab.onclick = ()=>{
-          Dom.setBlinkArrow(-1)
-          previousFunction()
-        }
-      })
-      return true;  
-
+      contentAdderBtns.forEach((cab) => {
+        let previousFunction = cab.onclick;
+        cab.onclick = () => {
+          Dom.setBlinkArrow(-1);
+          previousFunction();
+        };
+      });
+      return true;
     }),
     (step3 = function () {
       setIsProcessRunning(true);
@@ -1258,275 +1303,293 @@ const Scenes = {
       Scenes.items.contentAdderBox.item.innerHTML = "";
 
       // Required Elements
-      Scenes.setStepHeading("Step 3", "Connect form floor corner with form form floor corner using waler clip,");
+      Scenes.setStepHeading("Step 3", "Connect form floor corner with form floor corner using waler clip.");
 
-      Scenes.items.contentAdderBox.set(null,-50).show("flex").push();
+      Scenes.items.contentAdderBox.set(null, -50).show("flex").push();
       Scenes.contentAdderAddBtn("Floor Corner");
       Scenes.contentAdderAddBtn("Floor Panel");
       Scenes.contentAdderAddBtn("Waler Clip");
-      Scenes.contentAdderAddBtn("Repeat")
+      Scenes.contentAdderAddBtn("Repeat");
 
       let contentAdderBtns = getAll(".content-adder-box .btn");
-      
-      
-      Scenes.items.form_floor_corner1.set(15,220,190).rotate(1).zIndex(2)
-      Scenes.items.form_floor_corner2.set(50,220,190).rotate(-1).zIndex(2)
-      
-      Scenes.items.panel1.set(697,226,178)
-      Scenes.items.panel2.set(710,215,178)
-      Scenes.items.panel3.set(723,200,178)
 
-      Scenes.items.waler_clip1.set(130,359,20).zIndex(3)
-      Scenes.items.waler_clip2.set(135,349,20).zIndex(3)
-      Scenes.items.waler_clip3.set(140,339,20).zIndex(3)
-      Scenes.items.waler_clip4.set(145,329,20).zIndex(3)
-      
-      Scenes.items.waler_clip5.set(180,359,20)
-      Scenes.items.waler_clip6.set(185,349,20)
-      Scenes.items.waler_clip7.set(190,339,20)
-      Scenes.items.waler_clip8.set(195,329,20)
-      
-      Scenes.items.waler_clip9 .set(240,359,20)
-      Scenes.items.waler_clip10.set(245,349,20)
-      Scenes.items.waler_clip11.set(250,339,20)
-      Scenes.items.waler_clip12.set(255,329,20)
-      
-      Scenes.items.waler_clip13.set(290,359,20).zIndex(3)
-      Scenes.items.waler_clip14.set(295,349,20).zIndex(3)
-      Scenes.items.waler_clip15.set(300,339,20).zIndex(3)
-      Scenes.items.waler_clip16.set(305,329,20).zIndex(3)
+      Scenes.items.form_floor_corner1.set(15, 220, 190).rotate(1).zIndex(2);
+      Scenes.items.form_floor_corner2.set(50, 220, 190).rotate(-1).zIndex(2);
 
-      Scenes.items.tempTitle1.set(10,170).setContent("Form Floor<br>Corner")
-      Scenes.items.tempTitle3.set(730,178).setContent("Form Floor Panel")
-      Scenes.items.tempTitle2.set(188,296).setContent("Waler Clips")
-      
-    
+      Scenes.items.panel1.set(697, 226, 178);
+      Scenes.items.panel2.set(710, 215, 178);
+      Scenes.items.panel3.set(723, 200, 178);
+
+      Scenes.items.waler_clip1.set(130, 359, 20).zIndex(3);
+      Scenes.items.waler_clip2.set(135, 349, 20).zIndex(3);
+      Scenes.items.waler_clip3.set(140, 339, 20).zIndex(3);
+      Scenes.items.waler_clip4.set(145, 329, 20).zIndex(3);
+
+      Scenes.items.waler_clip5.set(180, 359, 20);
+      Scenes.items.waler_clip6.set(185, 349, 20);
+      Scenes.items.waler_clip7.set(190, 339, 20);
+      Scenes.items.waler_clip8.set(195, 329, 20);
+
+      Scenes.items.waler_clip9.set(240, 359, 20);
+      Scenes.items.waler_clip10.set(245, 349, 20);
+      Scenes.items.waler_clip11.set(250, 339, 20);
+      Scenes.items.waler_clip12.set(255, 329, 20);
+
+      Scenes.items.waler_clip13.set(290, 359, 20).zIndex(3);
+      Scenes.items.waler_clip14.set(295, 349, 20).zIndex(3);
+      Scenes.items.waler_clip15.set(300, 339, 20).zIndex(3);
+      Scenes.items.waler_clip16.set(305, 329, 20).zIndex(3);
+
+      Scenes.items.tempTitle1.set(10, 170).setContent("Form Floor<br>Corner");
+      Scenes.items.tempTitle3.set(730, 178).setContent("Form Floor Panel");
+      Scenes.items.tempTitle2.set(188, 296).setContent("Waler Clips");
+
       let cornerCount = 0;
       let panelCount = 0;
       let walerClipCount = 0;
 
-      const floorCornerAnime = ()=>{
+      const floorCornerAnime = () => {
         Dom.setBlinkArrow(-1);
-        switch(cornerCount){
+        switch (cornerCount) {
           case 0:
-            anime({
-              easing: "easeInOutQuad",
-              targets: [Scenes.items.form_floor_corner2.item],
-              left: 121,
-              top: 89,
-              duration: 1000,
-              complete(){
-                Scenes.showArrowForMenuItem()
-                setCC("Click on the 'Floor Panel' to add it in the lab.");
-              }
-            })
+            Dom.animePush(
+              anime({
+                easing: "easeInOutQuad",
+                targets: [Scenes.items.form_floor_corner2.item],
+                left: 121,
+                top: 89,
+                duration: 1000,
+                complete() {
+                  Scenes.showArrowForMenuItem();
+                  setCC("Click on the 'Floor Panel' to place it with the floor corner.");
+                },
+              })
+            );
             break;
 
           case 1:
-            anime({
-              easing: "easeInOutQuad",
-              targets: [Scenes.items.form_floor_corner1.item],
-              left: 626,
-              top: 87,
-              duration: 2000,
-            })
+            Dom.animePush(
+              anime({
+                easing: "easeInOutQuad",
+                targets: [Scenes.items.form_floor_corner1.item],
+                left: 626,
+                top: 87,
+                duration: 2000,
+              })
+            );
             break;
         }
         cornerCount++;
-      }
+      };
 
-      const floorPanelAnime = ()=>{
-        Dom.setBlinkArrow(-1)
-        switch(panelCount){
+      const floorPanelAnime = () => {
+        Dom.setBlinkArrow(-1);
+        switch (panelCount) {
           case 0:
-            anime({
-              easing: "easeInOutQuad",
-              targets: [Scenes.items.panel3.item],
-              left: 153,
-              top: 95,
-              duration: 2000,
-              complete(){
-                Scenes.showArrowForMenuItem()
-                setCC("Click on the 'Waler Clip' to add it in the lab.");
-              }
-            })
+            Dom.animePush(
+              anime({
+                easing: "easeInOutQuad",
+                targets: [Scenes.items.panel3.item],
+                left: 153,
+                top: 95,
+                duration: 2000,
+                complete() {
+                  Scenes.showArrowForMenuItem();
+                  setCC("Click on the 'Waler Clip' to attach floor corner with floor panel.");
+                },
+              })
+            );
             break;
-          
+
           case 1:
-            anime({
-              easing: "easeInOutQuad",
-              targets: [Scenes.items.panel2.item],
-              left: 311,
-              top: 95,
-              duration: 2000,
-            })
+            Dom.animePush(
+              anime({
+                easing: "easeInOutQuad",
+                targets: [Scenes.items.panel2.item],
+                left: 311,
+                top: 95,
+                duration: 2000,
+              })
+            );
             break;
-          
+
           case 2:
-            anime({
-              easing: "easeInOutQuad",
-              targets: [Scenes.items.panel1.item],
-              left: 469,
-              top: 95,
-              duration: 2000,
-              
-            })
+            Dom.animePush(
+              anime({
+                easing: "easeInOutQuad",
+                targets: [Scenes.items.panel1.item],
+                left: 469,
+                top: 95,
+                duration: 2000,
+              })
+            );
             break;
-          
         }
         panelCount++;
-      }
+      };
 
-      const walerClipAnime = ()=>{
-        Dom.setBlinkArrow(-1)
+      const walerClipAnime = () => {
+        Dom.setBlinkArrow(-1);
         let gap;
-        switch(walerClipCount){
+        switch (walerClipCount) {
           case 0:
-            anime.timeline({
-              easing: "easeInOutQuad",
-              duration: 1500,
-            })
-            .add({
-              targets: Scenes.items.waler_clip1.item,
-              left: 150,
-              top: 110,
-            })
-            .add({
-              targets: Scenes.items.waler_clip2.item,
-              left: 150,
-              top: 150,
-            })
-            .add({
-              targets: Scenes.items.waler_clip3.item,
-              left: 150,
-              top: 190,
-            })
-            .add({
-              targets: Scenes.items.waler_clip4.item,
-              left: 150,
-              top: 230,
-              complete(){
-                Scenes.showArrowForMenuItem()
-                setCC("Click on the 'Repeat' to repeat the above steps.");
-              }
-            })
+            Dom.animePush(
+              anime
+                .timeline({
+                  easing: "easeInOutQuad",
+                  duration: 1500,
+                })
+                .add({
+                  targets: Scenes.items.waler_clip1.item,
+                  left: 150,
+                  top: 110,
+                })
+                .add({
+                  targets: Scenes.items.waler_clip2.item,
+                  left: 150,
+                  top: 150,
+                })
+                .add({
+                  targets: Scenes.items.waler_clip3.item,
+                  left: 150,
+                  top: 190,
+                })
+                .add({
+                  targets: Scenes.items.waler_clip4.item,
+                  left: 150,
+                  top: 230,
+                  complete() {
+                    Scenes.showArrowForMenuItem();
+                    setCC("Click on the 'Repeat' to repeat the above steps.");
+                  },
+                })
+            );
             break;
-          
+
           case 1:
-            gap = (156*walerClipCount);
-            anime.timeline({
-              easing: "easeInOutQuad",
-            })
-            .add({
-              targets: Scenes.items.waler_clip5.item,
-              left: 150+gap,
-              top: 110,
-            })
-            .add({
-              targets: Scenes.items.waler_clip6.item,
-              left: 150+gap,
-              top: 150,
-            })
-            .add({
-              targets: Scenes.items.waler_clip7.item,
-              left: 150+gap,
-              top: 190,
-            })
-            .add({
-              targets: Scenes.items.waler_clip8.item,
-              left: 150+gap,
-              top: 230,
-              complete(){
-                Scenes.repeatShowArrowForMenuItem()
-              }
-            })
+            gap = 156 * walerClipCount;
+            Dom.animePush(
+              anime
+                .timeline({
+                  easing: "easeInOutQuad",
+                })
+                .add({
+                  targets: Scenes.items.waler_clip5.item,
+                  left: 150 + gap,
+                  top: 110,
+                })
+                .add({
+                  targets: Scenes.items.waler_clip6.item,
+                  left: 150 + gap,
+                  top: 150,
+                })
+                .add({
+                  targets: Scenes.items.waler_clip7.item,
+                  left: 150 + gap,
+                  top: 190,
+                })
+                .add({
+                  targets: Scenes.items.waler_clip8.item,
+                  left: 150 + gap,
+                  top: 230,
+                  complete() {
+                    Scenes.repeatShowArrowForMenuItem();
+                  },
+                })
+            );
             break;
-          
+
           case 2:
-            gap = (156*walerClipCount);
-            anime.timeline({
-              easing: "easeInOutQuad",
-            })
-            .add({
-              targets: Scenes.items.waler_clip9.item,
-              left: 150+gap,
-              top: 110,
-            })
-            .add({
-              targets: Scenes.items.waler_clip10.item,
-              left: 150+gap,
-              top: 150,
-            })
-            .add({
-              targets: Scenes.items.waler_clip11.item,
-              left: 150+gap,
-              top: 190,
-            })
-            .add({
-              targets: Scenes.items.waler_clip12.item,
-              left: 150+gap,
-              top: 230,
-              complete(){
-                Scenes.repeatShowArrowForMenuItem()
-              }
-            })
+            gap = 156 * walerClipCount;
+            Dom.animePush(
+              anime
+                .timeline({
+                  easing: "easeInOutQuad",
+                })
+                .add({
+                  targets: Scenes.items.waler_clip9.item,
+                  left: 150 + gap,
+                  top: 110,
+                })
+                .add({
+                  targets: Scenes.items.waler_clip10.item,
+                  left: 150 + gap,
+                  top: 150,
+                })
+                .add({
+                  targets: Scenes.items.waler_clip11.item,
+                  left: 150 + gap,
+                  top: 190,
+                })
+                .add({
+                  targets: Scenes.items.waler_clip12.item,
+                  left: 150 + gap,
+                  top: 230,
+                  complete() {
+                    Scenes.repeatShowArrowForMenuItem();
+                  },
+                })
+            );
             break;
-          
-            case 3:
-              gap = (156*walerClipCount);
-              anime.timeline({
-                easing: "easeInOutQuad",
-              })
-              .add({
-                delay: 2000,
-                targets: Scenes.items.waler_clip13.item,
-                left: 150+gap,
-                top: 110,
-              })
-              .add({
-                targets: Scenes.items.waler_clip14.item,
-                left: 150+gap,
-                top: 150,
-              })
-              .add({
-                targets: Scenes.items.waler_clip15.item,
-                left: 150+gap,
-                top: 190,
-              })
-              .add({
-                targets: Scenes.items.waler_clip16.item,
-                left: 150+gap,
-                top: 230,
-                complete(){
-                  // Quiz.loadQuiz();
-                  setIsProcessRunning(false);
-                }
-              })
-              break;
+
+          case 3:
+            gap = 156 * walerClipCount;
+            Dom.animePush(
+              anime
+                .timeline({
+                  easing: "easeInOutQuad",
+                })
+                .add({
+                  delay: 2000,
+                  targets: Scenes.items.waler_clip13.item,
+                  left: 150 + gap,
+                  top: 110,
+                })
+                .add({
+                  targets: Scenes.items.waler_clip14.item,
+                  left: 150 + gap,
+                  top: 150,
+                })
+                .add({
+                  targets: Scenes.items.waler_clip15.item,
+                  left: 150 + gap,
+                  top: 190,
+                })
+                .add({
+                  targets: Scenes.items.waler_clip16.item,
+                  left: 150 + gap,
+                  top: 230,
+                  complete() {
+                    // Quiz.loadQuiz();
+                    setIsProcessRunning(false);
+                  },
+                })
+            );
+            break;
         }
         walerClipCount++;
-      }
-            
-      Scenes.showArrowForMenuItem()
-      setCC("Click on the 'Floor Corner' to add it in the lab.");
+      };
+
+      Scenes.showArrowForMenuItem();
+      setCC("Click on the 'Floor Corner' to place it with the floor panel.");
       // onclick
       contentAdderBtns[0].onclick = floorCornerAnime;
       contentAdderBtns[1].onclick = floorPanelAnime;
       contentAdderBtns[2].onclick = walerClipAnime;
-      contentAdderBtns[3].onclick = ()=>{
-        floorPanelAnime()
-        if(walerClipCount===3){
-          floorCornerAnime()
+      contentAdderBtns[3].onclick = () => {
+        floorPanelAnime();
+        if (walerClipCount === 3) {
+          floorCornerAnime();
         }
-        setTimeout(walerClipAnime,1500);
+        setTimeout(walerClipAnime, 1500);
       };
-      contentAdderBtns.forEach(cab=>{
-        let previousFunction = cab.onclick
-        cab.onclick = ()=>{
-          Dom.setBlinkArrow(-1)
-          previousFunction()
-        }
-      })
+      contentAdderBtns.forEach((cab) => {
+        let previousFunction = cab.onclick;
+        cab.onclick = () => {
+          Dom.setBlinkArrow(-1);
+          previousFunction();
+        };
+      });
       //!remove
       // floorCornerAnime()
       // floorPanelAnime()
@@ -1541,7 +1604,6 @@ const Scenes = {
       // Scenes.items.waler_clip7.set(306,190,20)
       // Scenes.items.waler_clip8.set(306,230,20)
 
-      
       // setCC("Click on the 'Sheathing Left' to add sheathing in form panel.");
       // Dom.setBlinkArrow(true, 685, -35).play();
 
@@ -1551,1101 +1613,1146 @@ const Scenes = {
       Dom.hideAll();
       setIsProcessRunning(true);
       Scenes.items.contentAdderBox.setContent("");
-      Scenes.setStepHeading(
-        "Step 4",
-        "Attach waler pipes using pipe waler clamp."
-      );
+      Scenes.setStepHeading("Step 4", "Attach waler pipes using pipe waler clamp.");
 
-    // required items
-    Scenes.items.form_floor_corner1.set(626,87,190).rotate(1).zIndex(2)
-    Scenes.items.form_floor_corner2.set(121,89,190).rotate(-1).zIndex(2)
-    
-    Scenes.items.panel1.set(153,95,178)
-    Scenes.items.panel2.set(311,95,178)
-    Scenes.items.panel3.set(469,95,178)
+      // required items
+      Scenes.items.form_floor_corner1.set(626, 87, 190).rotate(1).zIndex(2);
+      Scenes.items.form_floor_corner2.set(121, 89, 190).rotate(-1).zIndex(2);
 
-    Scenes.items.waler_clip1.set(150,110,20).zIndex(3)
-    Scenes.items.waler_clip2.set(150,150,20).zIndex(3)
-    Scenes.items.waler_clip3.set(150,190,20).zIndex(3)
-    Scenes.items.waler_clip4.set(150,230,20).zIndex(3)
-    
-    Scenes.items.waler_clip5.set(306,110,20)
-    Scenes.items.waler_clip6.set(306,150,20)
-    Scenes.items.waler_clip7.set(306,190,20)
-    Scenes.items.waler_clip8.set(306,230,20)
-    
-    Scenes.items.waler_clip9 .set(462,110,20)
-    Scenes.items.waler_clip10.set(462,150,20)
-    Scenes.items.waler_clip11.set(462,190,20)
-    Scenes.items.waler_clip12.set(462,230,20)
-    
-    Scenes.items.waler_clip13.set(618,110,20).zIndex(3)
-    Scenes.items.waler_clip14.set(618,150,20).zIndex(3)
-    Scenes.items.waler_clip15.set(618,190,20).zIndex(3)
-    Scenes.items.waler_clip16.set(618,230,20).zIndex(3)
+      Scenes.items.panel1.set(153, 95, 178);
+      Scenes.items.panel2.set(311, 95, 178);
+      Scenes.items.panel3.set(469, 95, 178);
 
-    Scenes.items.pipe_waler_cutout1.set(37,360,18,550).zIndex(4)
-    Scenes.items.pipe_waler_cutout2.set(37,380,18,550).zIndex(4)
-    
-     Scenes.items.pipe_waler_connector1.set(700,370,30,20).zIndex(5)
-     Scenes.items.pipe_waler_connector2.set(725,370,30,20).zIndex(5)
-     Scenes.items.pipe_waler_connector3.set(750,370,30,20).zIndex(5)
-     Scenes.items.pipe_waler_connector4.set(775,370,30,20).zIndex(5)
-     Scenes.items.pipe_waler_connector5.set(710,330,30,20).zIndex(5)
-     Scenes.items.pipe_waler_connector6.set(735,330,30,20).zIndex(5)
-     Scenes.items.pipe_waler_connector7.set(760,330,30,20).zIndex(5)
-     Scenes.items.pipe_waler_connector8.set(785,330,30,20).zIndex(5)
+      Scenes.items.waler_clip1.set(150, 110, 20).zIndex(3);
+      Scenes.items.waler_clip2.set(150, 150, 20).zIndex(3);
+      Scenes.items.waler_clip3.set(150, 190, 20).zIndex(3);
+      Scenes.items.waler_clip4.set(150, 230, 20).zIndex(3);
 
-     Scenes.items.larrow2.set(783,280,50)
-     Scenes.items.pipe_waler_clamp_full.set(850,250,60)
-     Scenes.items.tempTitle1.set(850,320,60).setContent("Waler clamp")
+      Scenes.items.waler_clip5.set(306, 110, 20);
+      Scenes.items.waler_clip6.set(306, 150, 20);
+      Scenes.items.waler_clip7.set(306, 190, 20);
+      Scenes.items.waler_clip8.set(306, 230, 20);
 
-     
+      Scenes.items.waler_clip9.set(462, 110, 20);
+      Scenes.items.waler_clip10.set(462, 150, 20);
+      Scenes.items.waler_clip11.set(462, 190, 20);
+      Scenes.items.waler_clip12.set(462, 230, 20);
 
-    //! final pos
-    //  Scenes.items.pipe_waler_cutout1.set(115,130,18,550).zIndex(4)
-    //  Scenes.items.pipe_waler_cutout2.set(115,215,18,550).zIndex(4)
+      Scenes.items.waler_clip13.set(618, 110, 20).zIndex(3);
+      Scenes.items.waler_clip14.set(618, 150, 20).zIndex(3);
+      Scenes.items.waler_clip15.set(618, 190, 20).zIndex(3);
+      Scenes.items.waler_clip16.set(618, 230, 20).zIndex(3);
 
-    //  Scenes.items.pipe_waler_connector1.set(142,118,30,20).zIndex(5)
-    //  Scenes.items.pipe_waler_connector2.set(300,118,30,20).zIndex(5)
-    //  Scenes.items.pipe_waler_connector3.set(456,118,30,20).zIndex(5)
-    //  Scenes.items.pipe_waler_connector4.set(612,118,30,20).zIndex(5)
-    //  Scenes.items.pipe_waler_connector5.set(142,204,30,20).zIndex(5)
-    //  Scenes.items.pipe_waler_connector6.set(300,204,30,20).zIndex(5)
-    //  Scenes.items.pipe_waler_connector7.set(456,204,30,20).zIndex(5)
-    //  Scenes.items.pipe_waler_connector8.set(612,204,30,20).zIndex(5)
+      Scenes.items.pipe_waler_cutout1.set(37, 360, 18, 550).zIndex(4);
+      Scenes.items.pipe_waler_cutout2.set(37, 380, 18, 550).zIndex(4);
 
-    // content adder
-    Scenes.items.contentAdderBox.set(null, -50).show("flex").push()
-    Scenes.contentAdderAddBtn("Pipe Waler")
-    Scenes.contentAdderAddBtn("Pipe Clamp")
-    let contentAdderBtns = getAll(".content-adder-box .btn")
-      
-     let pipeCount = 0;
-     const pipeWalerAnime = ()=>{
-      switch(pipeCount){
-        case 0:
-          anime({
-            easing: "easeInOutQuad",
-            targets: Scenes.items.pipe_waler_cutout1.item,
-            left: 115,
-            top: 130,
-            duration: 2000,
-            complete(){
-              Scenes.showArrowForMenuItem()
-              setCC("Click on the 'Pipe Clamp' to add it in the lab.")
-            }
-          })
-          break;
-          
-        case 1:
-          anime({
-            easing: "easeInOutQuad",
-            targets: Scenes.items.pipe_waler_cutout2.item,
-            left: 115,
-            top: 215,
-            duration: 2000,
-            complete(){
-              Scenes.showArrowForMenuItem()
-              setCC("Click on the 'Pipe Clamp' to add it in the lab.")
-            }
-          })
-          break;
-      }
-      pipeCount++;
-     }
+      Scenes.items.pipe_waler_connector1.set(700, 370, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector2.set(725, 370, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector3.set(750, 370, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector4.set(775, 370, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector5.set(710, 330, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector6.set(735, 330, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector7.set(760, 330, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector8.set(785, 330, 30, 20).zIndex(5);
 
-     let walerClampCount = 0;
-     const walerClampAnime = ()=>{
-      switch(walerClampCount){
-        case 0:
-          anime.timeline({
-            easing: "easeInOutQuad",
-            duration: 1000,
-          })
-          .add({
-            targets: Scenes.items.pipe_waler_connector1.item,
-            left: 142,
-            top: 118,
-          })
-          .add({
-            targets: Scenes.items.pipe_waler_connector2.item,
-            left: 300,
-            top: 118,
-          })
-          .add({
-            targets: Scenes.items.pipe_waler_connector3.item,
-            left: 456,
-            top: 118,
-          })
-          .add({
-            targets: Scenes.items.pipe_waler_connector4.item,
-            left: 612,
-            top: 118,
-            complete(){
-              Scenes.menuItemNumber = 1
-              Scenes.showArrowForMenuItem()
-              setCC("Click on the 'Pipe Waler' to add it in the lab.")
-            }
-          })
-        break;
-          
-        case 1:
-          anime.timeline({
-            easing: "easeInOutQuad",
-            duration: 1000,
-          })
-          .add({
-            begin(){
-              Scenes.items.larrow2.hide()
-              Scenes.items.pipe_waler_clamp_full.hide()
-              Scenes.items.tempTitle1.hide()
-            },
-            targets: Scenes.items.pipe_waler_connector5.item,
-            left: 142,
-            top: 204,
-          })
-          .add({
-            targets: Scenes.items.pipe_waler_connector6.item,
-            left: 300,
-            top: 204,
-          })
-          .add({
-            targets: Scenes.items.pipe_waler_connector7.item,
-            left: 456,
-            top: 204,
-          })
-          .add({
-            targets: Scenes.items.pipe_waler_connector8.item,
-            left: 612,
-            top: 204,
-            complete(){
-              // Quiz.loadQuiz();
-              setIsProcessRunning(false);
-            }
-          })
-          break;
-          
-      }
-      walerClampCount++;
-     }
-     
-     Scenes.showArrowForMenuItem()
-     setCC("Click on the 'Pipe Waler' to add it in the lab.")
-     //onclick pipe waler 
-     contentAdderBtns[0].onclick = pipeWalerAnime;
-     contentAdderBtns[1].onclick = walerClampAnime;
-     contentAdderBtns.forEach(cab=>{
-      let previousFunction = cab.onclick
-      cab.onclick = ()=>{
-        Dom.setBlinkArrow(-1)
-        previousFunction()
-      }
-    })
-     return true;
+      Scenes.items.larrow2.set(783, 280, 50);
+      Scenes.items.pipe_waler_clamp_full.set(850, 250, 60);
+      Scenes.items.tempTitle1.set(850, 320, 60).setContent("Waler clamp");
 
+      //! final pos
+      //  Scenes.items.pipe_waler_cutout1.set(115,130,18,550).zIndex(4)
+      //  Scenes.items.pipe_waler_cutout2.set(115,215,18,550).zIndex(4)
+
+      //  Scenes.items.pipe_waler_connector1.set(142,118,30,20).zIndex(5)
+      //  Scenes.items.pipe_waler_connector2.set(300,118,30,20).zIndex(5)
+      //  Scenes.items.pipe_waler_connector3.set(456,118,30,20).zIndex(5)
+      //  Scenes.items.pipe_waler_connector4.set(612,118,30,20).zIndex(5)
+      //  Scenes.items.pipe_waler_connector5.set(142,204,30,20).zIndex(5)
+      //  Scenes.items.pipe_waler_connector6.set(300,204,30,20).zIndex(5)
+      //  Scenes.items.pipe_waler_connector7.set(456,204,30,20).zIndex(5)
+      //  Scenes.items.pipe_waler_connector8.set(612,204,30,20).zIndex(5)
+
+      // content adder
+      Scenes.items.contentAdderBox.set(null, -50).show("flex").push();
+      Scenes.contentAdderAddBtn("Pipe Waler");
+      Scenes.contentAdderAddBtn("Pipe Clamp");
+      let contentAdderBtns = getAll(".content-adder-box .btn");
+
+      let pipeCount = 0;
+      const pipeWalerAnime = () => {
+        switch (pipeCount) {
+          case 0:
+            Dom.animePush(
+              anime({
+                easing: "easeInOutQuad",
+                targets: Scenes.items.pipe_waler_cutout1.item,
+                left: 115,
+                top: 130,
+                duration: 2000,
+                complete() {
+                  Scenes.showArrowForMenuItem();
+                  setCC("Click on the 'Pipe Clamp' to attach it with pipe waler.");
+                },
+              })
+            );
+            break;
+
+          case 1:
+            Dom.animePush(
+              anime({
+                easing: "easeInOutQuad",
+                targets: Scenes.items.pipe_waler_cutout2.item,
+                left: 115,
+                top: 215,
+                duration: 2000,
+                complete() {
+                  Scenes.showArrowForMenuItem();
+                  setCC("Click on the 'Pipe Clamp' to attach it with pipe waler.");
+                },
+              })
+            );
+            break;
+        }
+        pipeCount++;
+      };
+
+      let walerClampCount = 0;
+      const walerClampAnime = () => {
+        switch (walerClampCount) {
+          case 0:
+            Dom.animePush(
+              anime
+                .timeline({
+                  easing: "easeInOutQuad",
+                  duration: 1000,
+                })
+                .add({
+                  targets: Scenes.items.pipe_waler_connector1.item,
+                  left: 142,
+                  top: 118,
+                })
+                .add({
+                  targets: Scenes.items.pipe_waler_connector2.item,
+                  left: 300,
+                  top: 118,
+                })
+                .add({
+                  targets: Scenes.items.pipe_waler_connector3.item,
+                  left: 456,
+                  top: 118,
+                })
+                .add({
+                  targets: Scenes.items.pipe_waler_connector4.item,
+                  left: 612,
+                  top: 118,
+                  complete() {
+                    Scenes.menuItemNumber = 1;
+                    Scenes.showArrowForMenuItem();
+                    setCC("Click on the 'Pipe Waler' to attach it with pipe clamp.");
+                  },
+                })
+            );
+            break;
+
+          case 1:
+            Dom.animePush(
+              anime
+                .timeline({
+                  easing: "easeInOutQuad",
+                  duration: 1000,
+                })
+                .add({
+                  begin() {
+                    Scenes.items.larrow2.hide();
+                    Scenes.items.pipe_waler_clamp_full.hide();
+                    Scenes.items.tempTitle1.hide();
+                  },
+                  targets: Scenes.items.pipe_waler_connector5.item,
+                  left: 142,
+                  top: 204,
+                })
+                .add({
+                  targets: Scenes.items.pipe_waler_connector6.item,
+                  left: 300,
+                  top: 204,
+                })
+                .add({
+                  targets: Scenes.items.pipe_waler_connector7.item,
+                  left: 456,
+                  top: 204,
+                })
+                .add({
+                  targets: Scenes.items.pipe_waler_connector8.item,
+                  left: 612,
+                  top: 204,
+                  complete() {
+                    // Quiz.loadQuiz();
+                    setIsProcessRunning(false);
+                  },
+                })
+            );
+            break;
+        }
+        walerClampCount++;
+      };
+
+      Scenes.showArrowForMenuItem();
+      setCC("Click on the 'Pipe Waler' to attach it with pipe clamp.");
+      //onclick pipe waler
+      contentAdderBtns[0].onclick = pipeWalerAnime;
+      contentAdderBtns[1].onclick = walerClampAnime;
+      contentAdderBtns.forEach((cab) => {
+        let previousFunction = cab.onclick;
+        cab.onclick = () => {
+          Dom.setBlinkArrow(-1);
+          previousFunction();
+        };
+      });
+      return true;
     }),
     (step5 = function () {
       setIsProcessRunning(true);
-      Dom.hideAll()
-      Scenes.setStepHeading(
-        "Step 5",
-        "Attach steel waler with pipe waler using steel waler connector."
-      );
+      Dom.hideAll();
+      Scenes.setStepHeading("Step 5", "Attach steel waler with pipe waler using steel waler connector.");
       // todo remove all previous
       Scenes.items.contentAdderBox.setContent("");
 
       // todo Required Items
-      Scenes.items.form_floor_corner1.set(626,87,190).rotate(1).zIndex(2)
-    Scenes.items.form_floor_corner2.set(121,89,190).rotate(-1).zIndex(2)
-    
-    Scenes.items.panel1.set(153,95,178)
-    Scenes.items.panel2.set(311,95,178)
-    Scenes.items.panel3.set(469,95,178)
+      Scenes.items.form_floor_corner1.set(626, 87, 190).rotate(1).zIndex(2);
+      Scenes.items.form_floor_corner2.set(121, 89, 190).rotate(-1).zIndex(2);
 
-    Scenes.items.waler_clip1.set(150,110,20).zIndex(3)
-    Scenes.items.waler_clip2.set(150,150,20).zIndex(3)
-    Scenes.items.waler_clip3.set(150,190,20).zIndex(3)
-    Scenes.items.waler_clip4.set(150,230,20).zIndex(3)
-    
-    Scenes.items.waler_clip5.set(306,110,20)
-    Scenes.items.waler_clip6.set(306,150,20)
-    Scenes.items.waler_clip7.set(306,190,20)
-    Scenes.items.waler_clip8.set(306,230,20)
-    
-    Scenes.items.waler_clip9 .set(462,110,20)
-    Scenes.items.waler_clip10.set(462,150,20)
-    Scenes.items.waler_clip11.set(462,190,20)
-    Scenes.items.waler_clip12.set(462,230,20)
-    
-    Scenes.items.waler_clip13.set(618,110,20).zIndex(3)
-    Scenes.items.waler_clip14.set(618,150,20).zIndex(3)
-    Scenes.items.waler_clip15.set(618,190,20).zIndex(3)
-    Scenes.items.waler_clip16.set(618,230,20).zIndex(3)
+      Scenes.items.panel1.set(153, 95, 178);
+      Scenes.items.panel2.set(311, 95, 178);
+      Scenes.items.panel3.set(469, 95, 178);
 
-    Scenes.items.pipe_waler_cutout1.set(37,360,18,550).zIndex(4)
-    Scenes.items.pipe_waler_cutout2.set(37,380,18,550).zIndex(4)
-    
-    Scenes.items.pipe_waler_connector1.set(700,370,30,20).zIndex(5)
-    Scenes.items.pipe_waler_connector2.set(725,370,30,20).zIndex(5)
-    Scenes.items.pipe_waler_connector3.set(750,370,30,20).zIndex(5)
-    Scenes.items.pipe_waler_connector4.set(775,370,30,20).zIndex(5)
-    Scenes.items.pipe_waler_connector5.set(710,330,30,20).zIndex(5)
-    Scenes.items.pipe_waler_connector6.set(735,330,30,20).zIndex(5)
-    Scenes.items.pipe_waler_connector7.set(760,330,30,20).zIndex(5)
-    Scenes.items.pipe_waler_connector8.set(785,330,30,20).zIndex(5)
+      Scenes.items.waler_clip1.set(150, 110, 20).zIndex(3);
+      Scenes.items.waler_clip2.set(150, 150, 20).zIndex(3);
+      Scenes.items.waler_clip3.set(150, 190, 20).zIndex(3);
+      Scenes.items.waler_clip4.set(150, 230, 20).zIndex(3);
 
-    Scenes.items.pipe_waler_cutout1.set(115,130,18,550).zIndex(4)
-    Scenes.items.pipe_waler_cutout2.set(115,215,18,550).zIndex(4)
+      Scenes.items.waler_clip5.set(306, 110, 20);
+      Scenes.items.waler_clip6.set(306, 150, 20);
+      Scenes.items.waler_clip7.set(306, 190, 20);
+      Scenes.items.waler_clip8.set(306, 230, 20);
 
-    Scenes.items.pipe_waler_connector1.set(142,118,30,20).zIndex(5)
-    Scenes.items.pipe_waler_connector2.set(300,118,30,20).zIndex(5)
-    Scenes.items.pipe_waler_connector3.set(456,118,30,20).zIndex(5)
-    Scenes.items.pipe_waler_connector4.set(612,118,30,20).zIndex(5)
-    Scenes.items.pipe_waler_connector5.set(142,204,30,20).zIndex(5)
-    Scenes.items.pipe_waler_connector6.set(300,204,30,20).zIndex(5)
-    Scenes.items.pipe_waler_connector7.set(456,204,30,20).zIndex(5)
-    Scenes.items.pipe_waler_connector8.set(612,204,30,20).zIndex(5)
+      Scenes.items.waler_clip9.set(462, 110, 20);
+      Scenes.items.waler_clip10.set(462, 150, 20);
+      Scenes.items.waler_clip11.set(462, 190, 20);
+      Scenes.items.waler_clip12.set(462, 230, 20);
 
-    Scenes.items.steel_waler1.set(30,315,30,185).zIndex(7)
-    Scenes.items.steel_waler2.set(20,348,30,185).zIndex(7)
-    Scenes.items.steel_waler3.set(10,380,30,185).zIndex(7)
-    
-    Scenes.items.steel_waler_connector1.set(300,320,30).rotate(-40).zIndex(6)
-    Scenes.items.steel_waler_connector2.set(280,366,30).rotate(-40).zIndex(6)
-    Scenes.items.steel_waler_connector3.set(320,320,30).rotate(-40).zIndex(6)
-    Scenes.items.steel_waler_connector4.set(300,366,30).rotate(-40).zIndex(6)
-    Scenes.items.steel_waler_connector5.set(340,320,30).rotate(-40).zIndex(6)
-    Scenes.items.steel_waler_connector6.set(320,366,30).rotate(-40).zIndex(6)
+      Scenes.items.waler_clip13.set(618, 110, 20).zIndex(3);
+      Scenes.items.waler_clip14.set(618, 150, 20).zIndex(3);
+      Scenes.items.waler_clip15.set(618, 190, 20).zIndex(3);
+      Scenes.items.waler_clip16.set(618, 230, 20).zIndex(3);
 
-    Scenes.items.anchor_plate1.set(427,353,25).zIndex(8)
-    Scenes.items.anchor_plate2.set(417,380,25).zIndex(8)
-    Scenes.items.anchor_plate3.set(454,353,25).zIndex(8)
-    Scenes.items.anchor_plate4.set(443,380,25).zIndex(8)
-    Scenes.items.anchor_plate5.set(481,353,25).zIndex(8)
-    Scenes.items.anchor_plate6.set(470,380,25).zIndex(8)
+      Scenes.items.pipe_waler_cutout1.set(37, 360, 18, 550).zIndex(4);
+      Scenes.items.pipe_waler_cutout2.set(37, 380, 18, 550).zIndex(4);
 
-    Scenes.items.wing_nut1.set(570,374.5,8).zIndex(9)
-    Scenes.items.wing_nut2.set(551,393.5,8).zIndex(9)
-    Scenes.items.wing_nut3.set(600,374.5,8).zIndex(9)
-    Scenes.items.wing_nut4.set(580,393.5,8).zIndex(9)
-    Scenes.items.wing_nut5.set(630,374.5,8).zIndex(9)
-    Scenes.items.wing_nut6.set(608,393.5,8).zIndex(9)
+      Scenes.items.pipe_waler_connector1.set(700, 370, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector2.set(725, 370, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector3.set(750, 370, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector4.set(775, 370, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector5.set(710, 330, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector6.set(735, 330, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector7.set(760, 330, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector8.set(785, 330, 30, 20).zIndex(5);
 
-    Scenes.items.larrow2.set(635,330,40)
-    Scenes.items.wing_nut_full.set(680,300,50)
-    Scenes.items.tempTitle1.set(680,350).setContent("Wing Nut")
+      Scenes.items.pipe_waler_cutout1.set(115, 130, 18, 550).zIndex(4);
+      Scenes.items.pipe_waler_cutout2.set(115, 215, 18, 550).zIndex(4);
 
-    // !remove
-    // Scenes.items.steel_waler1.set(140,168,30,185).rotate(90).zIndex(7)
-    // Scenes.items.steel_waler2.set(300,168,30,185).rotate(90).zIndex(7)
-    // Scenes.items.steel_waler3.set(455,168,30,185).rotate(90).zIndex(7)
-    
-    // Scenes.items.steel_waler_connector1.set(220,130,30).rotate(-40).zIndex(6)
-    // Scenes.items.steel_waler_connector2.set(220,216,30).rotate(-40).zIndex(6)
-    // Scenes.items.steel_waler_connector3.set(380,130,30).rotate(-40).zIndex(6)
-    // Scenes.items.steel_waler_connector4.set(380,216,30).rotate(-40).zIndex(6)
-    // Scenes.items.steel_waler_connector5.set(535,130,30).rotate(-40).zIndex(6)
-    // Scenes.items.steel_waler_connector6.set(535,216,30).rotate(-40).zIndex(6)
+      Scenes.items.pipe_waler_connector1.set(142, 118, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector2.set(300, 118, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector3.set(456, 118, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector4.set(612, 118, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector5.set(142, 204, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector6.set(300, 204, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector7.set(456, 204, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector8.set(612, 204, 30, 20).zIndex(5);
 
-    // Scenes.items.anchor_plate1.set(220,129,25).zIndex(8)
-    // Scenes.items.anchor_plate2.set(220,212,25).zIndex(8)
-    // Scenes.items.anchor_plate3.set(380,129,25).zIndex(8)
-    // Scenes.items.anchor_plate4.set(380,212,25).zIndex(8)
-    // Scenes.items.anchor_plate5.set(536,129,25).zIndex(8)
-    // Scenes.items.anchor_plate6.set(536,212,25).zIndex(8)
+      Scenes.items.steel_waler1.set(30, 315, 30, 185).zIndex(7);
+      Scenes.items.steel_waler2.set(20, 348, 30, 185).zIndex(7);
+      Scenes.items.steel_waler3.set(10, 380, 30, 185).zIndex(7);
 
-    // Scenes.items.wing_nut1.set(219,137.5,8).zIndex(9)
-    // Scenes.items.wing_nut2.set(219,220.5,8).zIndex(9)
-    // Scenes.items.wing_nut3.set(379,137.5,8).zIndex(9)
-    // Scenes.items.wing_nut4.set(379,220.5,8).zIndex(9)
-    // Scenes.items.wing_nut5.set(535,137.5,8).zIndex(9)
-    // Scenes.items.wing_nut6.set(535,220.5,8).zIndex(9)
+      Scenes.items.steel_waler_connector1.set(300, 320, 30).rotate(-40).zIndex(6);
+      Scenes.items.steel_waler_connector2.set(280, 366, 30).rotate(-40).zIndex(6);
+      Scenes.items.steel_waler_connector3.set(320, 320, 30).rotate(-40).zIndex(6);
+      Scenes.items.steel_waler_connector4.set(300, 366, 30).rotate(-40).zIndex(6);
+      Scenes.items.steel_waler_connector5.set(340, 320, 30).rotate(-40).zIndex(6);
+      Scenes.items.steel_waler_connector6.set(320, 366, 30).rotate(-40).zIndex(6);
 
-    // content adder
-    Scenes.items.contentAdderBox.set(null, -50).show("flex").push();
-    Scenes.contentAdderAddBtn("Waler Connector");
-    Scenes.contentAdderAddBtn("Steel Waler");
-    Scenes.contentAdderAddBtn("Anchor Plate");
-    Scenes.contentAdderAddBtn("Wing Nut");
-    Scenes.contentAdderAddBtn("Repeat");
-    let contentAdderBtns = getAll(".content-adder-box .btn");
+      Scenes.items.anchor_plate1.set(427, 353, 25).zIndex(8);
+      Scenes.items.anchor_plate2.set(417, 380, 25).zIndex(8);
+      Scenes.items.anchor_plate3.set(454, 353, 25).zIndex(8);
+      Scenes.items.anchor_plate4.set(443, 380, 25).zIndex(8);
+      Scenes.items.anchor_plate5.set(481, 353, 25).zIndex(8);
+      Scenes.items.anchor_plate6.set(470, 380, 25).zIndex(8);
 
-    let walerConnectorCount = 0;
-    let steelWalerCount = 0;
-    let anchorPlateCount = 0;
-    let wingNutCount = 0; 
+      Scenes.items.wing_nut1.set(570, 374.5, 8).zIndex(9);
+      Scenes.items.wing_nut2.set(551, 393.5, 8).zIndex(9);
+      Scenes.items.wing_nut3.set(600, 374.5, 8).zIndex(9);
+      Scenes.items.wing_nut4.set(580, 393.5, 8).zIndex(9);
+      Scenes.items.wing_nut5.set(630, 374.5, 8).zIndex(9);
+      Scenes.items.wing_nut6.set(608, 393.5, 8).zIndex(9);
 
-    const walerConnectorAnime = ()=>{
-      switch(walerConnectorCount){
-        case 0:
-          anime.timeline({
-              easing: "easeInOutQuad",
-              duration: 1000,
-          })
-          .add({
-            targets: Scenes.items.steel_waler_connector1.item,
-            left:220,
-            top:130,
-          })
-          .add({
-            targets: Scenes.items.steel_waler_connector2.item,
-            left:220,
-            top:216,
-            complete(){
-              Scenes.showArrowForMenuItem()
-              setCC("Click on the 'Steel Waler' to attach it with the steel waler connector.")
-            }
-          })
-          break
-        case 1:
-          anime.timeline({
-              easing: "easeInOutQuad",
-              duration: 1000,
-          })
-          .add({
-            targets: Scenes.items.steel_waler_connector3.item,
-            left:380,
-            top:130,
-          })
-          .add({
-            targets: Scenes.items.steel_waler_connector4.item,
-            left:380,
-            top:216,
-          })
-          break
-        case 2:
-          anime.timeline({
-              easing: "easeInOutQuad",
-              duration: 1000,
-          })
-          .add({
-            targets: Scenes.items.steel_waler_connector5.item,
-            left:535,
-            top:130,
-          })
-          .add({
-            targets: Scenes.items.steel_waler_connector6.item,
-            left:535,
-            top:216,
-          })
-          break
+      Scenes.items.larrow2.set(635, 330, 40);
+      Scenes.items.wing_nut_full.set(680, 300, 50);
+      Scenes.items.tempTitle1.set(680, 350).setContent("Wing Nut");
 
-      }
-      walerConnectorCount++;
-    }
-    
-    const steelWalerAnime = ()=>{
-      switch(steelWalerCount){
-        case 0:
-          anime({
-            easing: "easeInOutQuad",
-            targets: Scenes.items.steel_waler1.item,
-            left:140,
-            top:168,
-            duration: 1000,
-            rotate: 90,
-            complete(){
-              Scenes.showArrowForMenuItem()
-              setCC("Click on the 'Anchor Plate' to attach it with the steel waler connector.")
-            }
-          })
-          break
-        case 1:
-          anime({
-            easing: "easeInOutQuad",
-            targets: Scenes.items.steel_waler2.item,
-            left:300,
-            top:168,
-            duration: 1000,
-            rotate: 90
-          })
-          break
-        case 2:
-          anime({
-            easing: "easeInOutQuad",
-            targets: Scenes.items.steel_waler3.item,
-            left:455,
-            top:168,
-            duration: 1000,
-            rotate: 90
-          })
-          break
+      // !remove
+      // Scenes.items.steel_waler1.set(140,168,30,185).rotate(90).zIndex(7)
+      // Scenes.items.steel_waler2.set(300,168,30,185).rotate(90).zIndex(7)
+      // Scenes.items.steel_waler3.set(455,168,30,185).rotate(90).zIndex(7)
 
-        
-      }
-      steelWalerCount++;
-    }
+      // Scenes.items.steel_waler_connector1.set(220,130,30).rotate(-40).zIndex(6)
+      // Scenes.items.steel_waler_connector2.set(220,216,30).rotate(-40).zIndex(6)
+      // Scenes.items.steel_waler_connector3.set(380,130,30).rotate(-40).zIndex(6)
+      // Scenes.items.steel_waler_connector4.set(380,216,30).rotate(-40).zIndex(6)
+      // Scenes.items.steel_waler_connector5.set(535,130,30).rotate(-40).zIndex(6)
+      // Scenes.items.steel_waler_connector6.set(535,216,30).rotate(-40).zIndex(6)
 
-    const anchorPlateAnime = ()=>{
-      let rotationCount = 1;
-      switch(anchorPlateCount){
-        case 0:
-          anime.timeline({
-              easing: "easeInOutQuad",
-              duration: 1000,
-          })
-          .add({
-            targets: Scenes.items.anchor_plate1.item,
-            keyframes: [
-              {left:220, top:129,},
-              {rotate: 360 * rotationCount, duration: 3000}
-            ]
-          })
-          .add({
-            targets: Scenes.items.anchor_plate2.item,
-            keyframes: [
-              {left:220, top:212,},
-              {rotate: 360 * rotationCount, duration: 3000}
-            ],
-            complete(){
-              Scenes.showArrowForMenuItem()
-              setCC("Click on the 'Wing Nut' to tighten it.")
-            }
-          })
-          break
-        case 1:
-          anime.timeline({
-              easing: "easeInOutQuad",
-              duration: 1000,
-          })
-          .add({
-            targets: Scenes.items.anchor_plate3.item,
-            keyframes: [
-              {left:380, top:129,},
-              {rotate: 360 * rotationCount, duration: 3000}
-            ]
-          })
-          .add({
-            targets: Scenes.items.anchor_plate4.item,
-            keyframes: [
-              {left:380, top:212,},
-              {rotate: 360 * rotationCount, duration: 3000}
-            ]
-          })
-          break
-        case 2:
-          anime.timeline({
-            easing: "easeInOutQuad",
-            duration: 1000,
-          })
-          .add({
-            targets: Scenes.items.anchor_plate5.item,
-            keyframes: [
-              {left:536, top:129,},
-              {rotate: 360 * rotationCount, duration: 3000}
-            ]
-          })
-          .add({
-            targets: Scenes.items.anchor_plate6.item,
-            keyframes: [
-              {left:536, top:212,},
-              {rotate: 360 * rotationCount, duration: 3000}
-            ]
-          })
-          break
-      }
-      anchorPlateCount++;
-    }
+      // Scenes.items.anchor_plate1.set(220,129,25).zIndex(8)
+      // Scenes.items.anchor_plate2.set(220,212,25).zIndex(8)
+      // Scenes.items.anchor_plate3.set(380,129,25).zIndex(8)
+      // Scenes.items.anchor_plate4.set(380,212,25).zIndex(8)
+      // Scenes.items.anchor_plate5.set(536,129,25).zIndex(8)
+      // Scenes.items.anchor_plate6.set(536,212,25).zIndex(8)
 
-    const wingNutAnime = ()=>{
-      let rotationCount = 1;
-      switch(wingNutCount){
-        case 0:
-          anime.timeline({
-              easing: "easeInOutQuad",
-              duration: 1000,
-          })
-          .add({
-            targets: Scenes.items.wing_nut1.item,
-            keyframes: [
-              {left:219, top:137,},
-              {rotate: 360 * rotationCount, duration: 3000}
-            ]
-          })
-          .add({
-            targets: Scenes.items.wing_nut2.item,
-            keyframes: [
-              {left:219, top:220,},
-              {rotate: 360 * rotationCount, duration: 3000}
-            ],
-            complete(){
-              Scenes.showArrowForMenuItem()
-              setCC("Click on the 'Repeat' to repeat the previous steps.")
-            }
-          })
-          break
-        case 1:
-          anime.timeline({
-              easing: "easeInOutQuad",
-              duration: 1000,
-          })
-          .add({
-            targets: Scenes.items.wing_nut3.item,
-            keyframes: [
-              {left:379, top:137,},
-              {rotate: 360 * rotationCount, duration: 3000}
-            ]
-          })
-          .add({
-            targets: Scenes.items.wing_nut4.item,
-            keyframes: [
-              {left:379, top:220,},
-              {rotate: 360 * rotationCount, duration: 3000}
-            ],
-            complete(){
-              Scenes.repeatShowArrowForMenuItem()
-            }
-          })
-          break
-        case 2:
-          anime.timeline({
-            easing: "easeInOutQuad",
-            duration: 1000,
-          })
-          .add({
-            targets: Scenes.items.wing_nut5.item,
-            left:535,
-            top:137,
-            keyframes: [
-              {left:535, top:137,},
-              {rotate: 360 * rotationCount, duration: 3000}
-            ]
-          })
-          .add({
-            targets: Scenes.items.wing_nut6.item,
-            keyframes: [
-              {left:535, top:220,},
-              {rotate: 360 * rotationCount, duration: 3000}
-            ],
-            complete(){
-              Scenes.items.larrow2.hide()
-              Scenes.items.wing_nut_full.hide()
-              Scenes.items.tempTitle1.hide()
-              // Quiz.loadQuiz();
+      // Scenes.items.wing_nut1.set(219,137.5,8).zIndex(9)
+      // Scenes.items.wing_nut2.set(219,220.5,8).zIndex(9)
+      // Scenes.items.wing_nut3.set(379,137.5,8).zIndex(9)
+      // Scenes.items.wing_nut4.set(379,220.5,8).zIndex(9)
+      // Scenes.items.wing_nut5.set(535,137.5,8).zIndex(9)
+      // Scenes.items.wing_nut6.set(535,220.5,8).zIndex(9)
 
-              setIsProcessRunning(false);
-            }
-          })
-          break
-      }
-      wingNutCount++;
-    }
-    Scenes.showArrowForMenuItem()
-    setCC("Click on the 'Waler Connector' to connect it with the pipe.")
-    //onclick
-    contentAdderBtns[0].onclick = walerConnectorAnime
-    contentAdderBtns[1].onclick = steelWalerAnime
-    contentAdderBtns[2].onclick = anchorPlateAnime
-    contentAdderBtns[3].onclick = wingNutAnime
-    contentAdderBtns[4].onclick = ()=>{
-      anime.timeline()
-      .add({
-        duration: 2000,
-        begin(){
-          walerConnectorAnime()
+      // content adder
+      Scenes.items.contentAdderBox.set(null, -50).show("flex").push();
+      Scenes.contentAdderAddBtn("Waler Connector");
+      Scenes.contentAdderAddBtn("Steel Waler");
+      Scenes.contentAdderAddBtn("Anchor Plate");
+      Scenes.contentAdderAddBtn("Wing Nut");
+      Scenes.contentAdderAddBtn("Repeat");
+      let contentAdderBtns = getAll(".content-adder-box .btn");
+
+      let walerConnectorCount = 0;
+      let steelWalerCount = 0;
+      let anchorPlateCount = 0;
+      let wingNutCount = 0;
+      setCC("Click on the 'Waler Connector' to attach it with the steel waler connector.");
+
+      const walerConnectorAnime = () => {
+        switch (walerConnectorCount) {
+          case 0:
+            Dom.animePush(
+              anime
+                .timeline({
+                  easing: "easeInOutQuad",
+                  duration: 1000,
+                })
+                .add({
+                  targets: Scenes.items.steel_waler_connector1.item,
+                  left: 220,
+                  top: 130,
+                })
+                .add({
+                  targets: Scenes.items.steel_waler_connector2.item,
+                  left: 220,
+                  top: 216,
+                  complete() {
+                    Scenes.showArrowForMenuItem();
+                    setCC("Click on the 'Steel Waler' to attach it with the steel waler connector.");
+                  },
+                })
+            );
+            break;
+          case 1:
+            Dom.animePush(
+              anime
+                .timeline({
+                  easing: "easeInOutQuad",
+                  duration: 1000,
+                })
+                .add({
+                  targets: Scenes.items.steel_waler_connector3.item,
+                  left: 380,
+                  top: 130,
+                })
+                .add({
+                  targets: Scenes.items.steel_waler_connector4.item,
+                  left: 380,
+                  top: 216,
+                })
+            );
+            break;
+          case 2:
+            Dom.animePush(
+              anime
+                .timeline({
+                  easing: "easeInOutQuad",
+                  duration: 1000,
+                })
+                .add({
+                  targets: Scenes.items.steel_waler_connector5.item,
+                  left: 535,
+                  top: 130,
+                })
+                .add({
+                  targets: Scenes.items.steel_waler_connector6.item,
+                  left: 535,
+                  top: 216,
+                })
+            );
+            break;
         }
-      })
-      .add({
-        duration: 1000,
-        begin(){
-          steelWalerAnime()
-        }
-      })
-      .add({
-        duration: 1000,
-        begin(){
-          anchorPlateAnime()
-        }
-      })
-      .add({
-        duration: 1000,
-        begin(){
-          wingNutAnime()
-        }
-      })
-    }
-    
+        walerConnectorCount++;
+      };
 
-    contentAdderBtns.forEach(cab=>{
-      let previousFunction = cab.onclick
-      cab.onclick = ()=>{
-        Dom.setBlinkArrow(-1)
-        previousFunction()
-      }
-    })
+      const steelWalerAnime = () => {
+        switch (steelWalerCount) {
+          case 0:
+            Dom.animePush(
+              anime({
+                easing: "easeInOutQuad",
+                targets: Scenes.items.steel_waler1.item,
+                left: 140,
+                top: 168,
+                duration: 1000,
+                rotate: 90,
+                complete() {
+                  Scenes.showArrowForMenuItem();
+                  setCC("Click on the 'Anchor Plate' to attach it with the steel waler connector.");
+                },
+              })
+            );
+            break;
+          case 1:
+            Dom.animePush(
+              anime({
+                easing: "easeInOutQuad",
+                targets: Scenes.items.steel_waler2.item,
+                left: 300,
+                top: 168,
+                duration: 1000,
+                rotate: 90,
+              })
+            );
+            break;
+          case 2:
+            Dom.animePush(
+              anime({
+                easing: "easeInOutQuad",
+                targets: Scenes.items.steel_waler3.item,
+                left: 455,
+                top: 168,
+                duration: 1000,
+                rotate: 90,
+              })
+            );
+            break;
+        }
+        steelWalerCount++;
+      };
 
+      const anchorPlateAnime = () => {
+        let rotationCount = 1;
+        switch (anchorPlateCount) {
+          case 0:
+            Dom.animePush(
+              anime
+                .timeline({
+                  easing: "easeInOutQuad",
+                  duration: 1000,
+                })
+                .add({
+                  targets: Scenes.items.anchor_plate1.item,
+                  keyframes: [
+                    { left: 220, top: 129 },
+                    { rotate: 360 * rotationCount, duration: 3000 },
+                  ],
+                })
+                .add({
+                  targets: Scenes.items.anchor_plate2.item,
+                  keyframes: [
+                    { left: 220, top: 212 },
+                    { rotate: 360 * rotationCount, duration: 3000 },
+                  ],
+                  complete() {
+                    Scenes.showArrowForMenuItem();
+                    setCC("Click on the 'Wing Nut' to tighten it.");
+                  },
+                })
+            );
+            break;
+          case 1:
+            Dom.animePush(
+              anime
+                .timeline({
+                  easing: "easeInOutQuad",
+                  duration: 1000,
+                })
+                .add({
+                  targets: Scenes.items.anchor_plate3.item,
+                  keyframes: [
+                    { left: 380, top: 129 },
+                    { rotate: 360 * rotationCount, duration: 3000 },
+                  ],
+                })
+                .add({
+                  targets: Scenes.items.anchor_plate4.item,
+                  keyframes: [
+                    { left: 380, top: 212 },
+                    { rotate: 360 * rotationCount, duration: 3000 },
+                  ],
+                })
+            );
+            break;
+          case 2:
+            Dom.animePush(
+              anime
+                .timeline({
+                  easing: "easeInOutQuad",
+                  duration: 1000,
+                })
+                .add({
+                  targets: Scenes.items.anchor_plate5.item,
+                  keyframes: [
+                    { left: 536, top: 129 },
+                    { rotate: 360 * rotationCount, duration: 3000 },
+                  ],
+                })
+                .add({
+                  targets: Scenes.items.anchor_plate6.item,
+                  keyframes: [
+                    { left: 536, top: 212 },
+                    { rotate: 360 * rotationCount, duration: 3000 },
+                  ],
+                })
+            );
+            break;
+        }
+        anchorPlateCount++;
+      };
 
-    // setCC("Click 'Next' to go to next step");
-        //   Dom.setBlinkArrow(true, 790, 408).play();
-        //   setIsProcessRunning(false);
-          anime({
-            duration: 1000,
-            complete(){
-              Quiz.loadQuiz()
-            }
-          });
-        // };
+      const wingNutAnime = () => {
+        let rotationCount = 1;
+        switch (wingNutCount) {
+          case 0:
+            Dom.animePush(
+              anime
+                .timeline({
+                  easing: "easeInOutQuad",
+                  duration: 1000,
+                })
+                .add({
+                  targets: Scenes.items.wing_nut1.item,
+                  keyframes: [
+                    { left: 219, top: 137 },
+                    { rotate: 360 * rotationCount, duration: 3000 },
+                  ],
+                })
+                .add({
+                  targets: Scenes.items.wing_nut2.item,
+                  keyframes: [
+                    { left: 219, top: 220 },
+                    { rotate: 360 * rotationCount, duration: 3000 },
+                  ],
+                  complete() {
+                    Scenes.showArrowForMenuItem();
+                    setCC("Click on the 'Repeat' to repeat the previous steps.");
+                  },
+                })
+            );
+            break;
+          case 1:
+            Dom.animePush(
+              anime
+                .timeline({
+                  easing: "easeInOutQuad",
+                  duration: 1000,
+                })
+                .add({
+                  targets: Scenes.items.wing_nut3.item,
+                  keyframes: [
+                    { left: 379, top: 137 },
+                    { rotate: 360 * rotationCount, duration: 3000 },
+                  ],
+                })
+                .add({
+                  targets: Scenes.items.wing_nut4.item,
+                  keyframes: [
+                    { left: 379, top: 220 },
+                    { rotate: 360 * rotationCount, duration: 3000 },
+                  ],
+                  complete() {
+                    Scenes.repeatShowArrowForMenuItem();
+                  },
+                })
+            );
+            break;
+          case 2:
+            Dom.animePush(
+              anime
+                .timeline({
+                  easing: "easeInOutQuad",
+                  duration: 1000,
+                })
+                .add({
+                  targets: Scenes.items.wing_nut5.item,
+                  left: 535,
+                  top: 137,
+                  keyframes: [
+                    { left: 535, top: 137 },
+                    { rotate: 360 * rotationCount, duration: 3000 },
+                  ],
+                })
+                .add({
+                  targets: Scenes.items.wing_nut6.item,
+                  keyframes: [
+                    { left: 535, top: 220 },
+                    { rotate: 360 * rotationCount, duration: 3000 },
+                  ],
+                  complete() {
+                    Scenes.items.larrow2.hide();
+                    Scenes.items.wing_nut_full.hide();
+                    Scenes.items.tempTitle1.hide();
+                    Dom.animePush(
+                      anime({
+                        duration: 1000,
+                        complete() {
+                          Quiz.loadQuiz();
+                          setIsProcessRunning(false);
+                        },
+                      })
+                    );
+                  },
+                })
+            );
+            break;
+        }
+        wingNutCount++;
+      };
+      Scenes.showArrowForMenuItem();
+      setCC("Click on the 'Waler Connector' to connect it with the pipe.");
+      //onclick
+      contentAdderBtns[0].onclick = walerConnectorAnime;
+      contentAdderBtns[1].onclick = steelWalerAnime;
+      contentAdderBtns[2].onclick = anchorPlateAnime;
+      contentAdderBtns[3].onclick = wingNutAnime;
+      contentAdderBtns[4].onclick = () => {
+        Dom.animePush(
+          anime
+            .timeline()
+            .add({
+              duration: 2000,
+              begin() {
+                walerConnectorAnime();
+              },
+            })
+            .add({
+              duration: 1000,
+              begin() {
+                steelWalerAnime();
+              },
+            })
+            .add({
+              duration: 1000,
+              begin() {
+                anchorPlateAnime();
+              },
+            })
+            .add({
+              duration: 1000,
+              begin() {
+                wingNutAnime();
+              },
+            })
+        );
+      };
+
+      contentAdderBtns.forEach((cab) => {
+        let previousFunction = cab.onclick;
+        cab.onclick = () => {
+          Dom.setBlinkArrow(-1);
+          previousFunction();
+        };
+      });
+
+      // setCC("Click 'Next' to go to next step");
+      //   Dom.setBlinkArrow(true, 790, 408).play();
+      //   setIsProcessRunning(false);
+
+      // };
       return true;
     }),
     (step6 = function () {
       setIsProcessRunning(true);
 
-      Scenes.setStepHeading(
-        "Step 6",
-        "Attaching CT prop with steel waler for providing support."
-      );
+      Scenes.setStepHeading("Step 6", "Attaching CT prop with steel waler for providing support.");
 
       // todo remove all previous
       Scenes.items.contentAdderBox.setContent("");
 
       // todo Required Items
-      Scenes.items.form_floor_corner1.set(626,87,190).rotate(1).zIndex(2)
-    Scenes.items.form_floor_corner2.set(121,89,190).rotate(-1).zIndex(2)
-    
-    Scenes.items.panel1.set(153,95,178)
-    Scenes.items.panel2.set(311,95,178)
-    Scenes.items.panel3.set(469,95,178)
+      Scenes.items.form_floor_corner1.set(626, 87, 190).rotate(1).zIndex(2);
+      Scenes.items.form_floor_corner2.set(121, 89, 190).rotate(-1).zIndex(2);
 
-    Scenes.items.waler_clip1.set(150,110,20).zIndex(3)
-    Scenes.items.waler_clip2.set(150,150,20).zIndex(3)
-    Scenes.items.waler_clip3.set(150,190,20).zIndex(3)
-    Scenes.items.waler_clip4.set(150,230,20).zIndex(3)
-    
-    Scenes.items.waler_clip5.set(306,110,20)
-    Scenes.items.waler_clip6.set(306,150,20)
-    Scenes.items.waler_clip7.set(306,190,20)
-    Scenes.items.waler_clip8.set(306,230,20)
-    
-    Scenes.items.waler_clip9 .set(462,110,20)
-    Scenes.items.waler_clip10.set(462,150,20)
-    Scenes.items.waler_clip11.set(462,190,20)
-    Scenes.items.waler_clip12.set(462,230,20)
-    
-    Scenes.items.waler_clip13.set(618,110,20).zIndex(3)
-    Scenes.items.waler_clip14.set(618,150,20).zIndex(3)
-    Scenes.items.waler_clip15.set(618,190,20).zIndex(3)
-    Scenes.items.waler_clip16.set(618,230,20).zIndex(3)
+      Scenes.items.panel1.set(153, 95, 178);
+      Scenes.items.panel2.set(311, 95, 178);
+      Scenes.items.panel3.set(469, 95, 178);
 
-    Scenes.items.pipe_waler_cutout1.set(37,360,18,550).zIndex(4)
-    Scenes.items.pipe_waler_cutout2.set(37,380,18,550).zIndex(4)
-    
-    Scenes.items.pipe_waler_connector1.set(700,370,30,20).zIndex(5)
-    Scenes.items.pipe_waler_connector2.set(725,370,30,20).zIndex(5)
-    Scenes.items.pipe_waler_connector3.set(750,370,30,20).zIndex(5)
-    Scenes.items.pipe_waler_connector4.set(775,370,30,20).zIndex(5)
-    Scenes.items.pipe_waler_connector5.set(710,330,30,20).zIndex(5)
-    Scenes.items.pipe_waler_connector6.set(735,330,30,20).zIndex(5)
-    Scenes.items.pipe_waler_connector7.set(760,330,30,20).zIndex(5)
-    Scenes.items.pipe_waler_connector8.set(785,330,30,20).zIndex(5)
+      Scenes.items.waler_clip1.set(150, 110, 20).zIndex(3);
+      Scenes.items.waler_clip2.set(150, 150, 20).zIndex(3);
+      Scenes.items.waler_clip3.set(150, 190, 20).zIndex(3);
+      Scenes.items.waler_clip4.set(150, 230, 20).zIndex(3);
 
-    Scenes.items.pipe_waler_cutout1.set(115,130,18,550).zIndex(4)
-    Scenes.items.pipe_waler_cutout2.set(115,215,18,550).zIndex(4)
+      Scenes.items.waler_clip5.set(306, 110, 20);
+      Scenes.items.waler_clip6.set(306, 150, 20);
+      Scenes.items.waler_clip7.set(306, 190, 20);
+      Scenes.items.waler_clip8.set(306, 230, 20);
 
-    Scenes.items.pipe_waler_connector1.set(142,118,30,20).zIndex(5)
-    Scenes.items.pipe_waler_connector2.set(300,118,30,20).zIndex(5)
-    Scenes.items.pipe_waler_connector3.set(456,118,30,20).zIndex(5)
-    Scenes.items.pipe_waler_connector4.set(612,118,30,20).zIndex(5)
-    Scenes.items.pipe_waler_connector5.set(142,204,30,20).zIndex(5)
-    Scenes.items.pipe_waler_connector6.set(300,204,30,20).zIndex(5)
-    Scenes.items.pipe_waler_connector7.set(456,204,30,20).zIndex(5)
-    Scenes.items.pipe_waler_connector8.set(612,204,30,20).zIndex(5)
+      Scenes.items.waler_clip9.set(462, 110, 20);
+      Scenes.items.waler_clip10.set(462, 150, 20);
+      Scenes.items.waler_clip11.set(462, 190, 20);
+      Scenes.items.waler_clip12.set(462, 230, 20);
 
-    Scenes.items.steel_waler1.set(140,168,30,185).rotate(90).zIndex(7)
-    Scenes.items.steel_waler2.set(300,168,30,185).rotate(90).zIndex(7)
-    Scenes.items.steel_waler3.set(455,168,30,185).rotate(90).zIndex(7)
-    
-    Scenes.items.steel_waler_connector1.set(220,130,30).rotate(-40).zIndex(6)
-    Scenes.items.steel_waler_connector2.set(220,216,30).rotate(-40).zIndex(6)
-    Scenes.items.steel_waler_connector3.set(380,130,30).rotate(-40).zIndex(6)
-    Scenes.items.steel_waler_connector4.set(380,216,30).rotate(-40).zIndex(6)
-    Scenes.items.steel_waler_connector5.set(535,130,30).rotate(-40).zIndex(6)
-    Scenes.items.steel_waler_connector6.set(535,216,30).rotate(-40).zIndex(6)
+      Scenes.items.waler_clip13.set(618, 110, 20).zIndex(3);
+      Scenes.items.waler_clip14.set(618, 150, 20).zIndex(3);
+      Scenes.items.waler_clip15.set(618, 190, 20).zIndex(3);
+      Scenes.items.waler_clip16.set(618, 230, 20).zIndex(3);
 
-    Scenes.items.anchor_plate1.set(220,129,25).zIndex(8)
-    Scenes.items.anchor_plate2.set(220,212,25).zIndex(8)
-    Scenes.items.anchor_plate3.set(380,129,25).zIndex(8)
-    Scenes.items.anchor_plate4.set(380,212,25).zIndex(8)
-    Scenes.items.anchor_plate5.set(536,129,25).zIndex(8)
-    Scenes.items.anchor_plate6.set(536,212,25).zIndex(8)
+      Scenes.items.pipe_waler_cutout1.set(37, 360, 18, 550).zIndex(4);
+      Scenes.items.pipe_waler_cutout2.set(37, 380, 18, 550).zIndex(4);
 
-    Scenes.items.wing_nut1.set(219,137.5,8).zIndex(9)
-    Scenes.items.wing_nut2.set(219,220.5,8).zIndex(9)
-    Scenes.items.wing_nut3.set(379,137.5,8).zIndex(9)
-    Scenes.items.wing_nut4.set(379,220.5,8).zIndex(9)
-    Scenes.items.wing_nut5.set(535,137.5,8).zIndex(9)
-    Scenes.items.wing_nut6.set(535,220.5,8).zIndex(9)
+      Scenes.items.pipe_waler_connector1.set(700, 370, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector2.set(725, 370, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector3.set(750, 370, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector4.set(775, 370, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector5.set(710, 330, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector6.set(735, 330, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector7.set(760, 330, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector8.set(785, 330, 30, 20).zIndex(5);
 
-    Scenes.items.ct_prop1.set(187,250,250,50).rotate(90).zIndex(11)
-    Scenes.items.ct_prop2.set(153,305,185,50).rotate(90).zIndex(11)
-    
-    Scenes.items.head_adapter1.set(400,360,25).zIndex(10)
-    Scenes.items.head_adapter2.set(440,360,25).zIndex(10)
-    
-    Scenes.items.foot_adapter1.set(510,310,75).zIndex(12)
+      Scenes.items.pipe_waler_cutout1.set(115, 130, 18, 550).zIndex(4);
+      Scenes.items.pipe_waler_cutout2.set(115, 215, 18, 550).zIndex(4);
 
-    // image Box
-    Scenes.items.imageBox.show("flex").set(750,200)
-    Scenes.items.imageBoxSrc.item.src = "./src/images/real_head_adapter.png";
-    Scenes.items.imageBoxTitle.setContent("Head Adapter")
+      Scenes.items.pipe_waler_connector1.set(142, 118, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector2.set(300, 118, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector3.set(456, 118, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector4.set(612, 118, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector5.set(142, 204, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector6.set(300, 204, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector7.set(456, 204, 30, 20).zIndex(5);
+      Scenes.items.pipe_waler_connector8.set(612, 204, 30, 20).zIndex(5);
 
-    //! remove
-    // Scenes.items.head_adapter1.set(220,129,25).zIndex(10)
-    // Scenes.items.head_adapter2.set(220,212,25).zIndex(10)
-    // Scenes.items.head_adapter3.set(380,129,25).zIndex(10)
-    // Scenes.items.head_adapter4.set(380,212,25).zIndex(10)
-    // Scenes.items.head_adapter5.set(536,129,25).zIndex(10)
-    // Scenes.items.head_adapter6.set(536,212,25).zIndex(10)
+      Scenes.items.steel_waler1.set(140, 168, 30, 185).rotate(90).zIndex(7);
+      Scenes.items.steel_waler2.set(300, 168, 30, 185).rotate(90).zIndex(7);
+      Scenes.items.steel_waler3.set(455, 168, 30, 185).rotate(90).zIndex(7);
 
-    // Scenes.items.ct_prop1.set(135,115,250,50).rotate(35).zIndex(11)
-    // Scenes.items.ct_prop2.set(135,190,185,50).rotate(50).zIndex(11)
-    // Scenes.items.ct_prop3.set(295,115,250,50).rotate(35).zIndex(11)
-    // Scenes.items.ct_prop4.set(295,190,185,50).rotate(50).zIndex(11)
-    // Scenes.items.ct_prop5.set(455,115,250,50).rotate(35).zIndex(11)
-    // Scenes.items.ct_prop6.set(455,190,185,50).rotate(50).zIndex(11)
+      Scenes.items.steel_waler_connector1.set(220, 130, 30).rotate(-40).zIndex(6);
+      Scenes.items.steel_waler_connector2.set(220, 216, 30).rotate(-40).zIndex(6);
+      Scenes.items.steel_waler_connector3.set(380, 130, 30).rotate(-40).zIndex(6);
+      Scenes.items.steel_waler_connector4.set(380, 216, 30).rotate(-40).zIndex(6);
+      Scenes.items.steel_waler_connector5.set(535, 130, 30).rotate(-40).zIndex(6);
+      Scenes.items.steel_waler_connector6.set(535, 216, 30).rotate(-40).zIndex(6);
 
-    // Scenes.items.foot_adapter1.set(55,280,75).zIndex(12)
-    // Scenes.items.foot_adapter2.set(216,280,75).zIndex(12)
-    // Scenes.items.foot_adapter3.set(376,280,75).zIndex(12)
-    
-    // content adder
-    Scenes.items.contentAdderBox.set(null, -50).show("flex").push();
-    Scenes.contentAdderAddBtn("Head Adapter");
-    Scenes.contentAdderAddBtn("Foot Adapter");
-    Scenes.contentAdderAddBtn("CT Prop");
-    Scenes.contentAdderAddBtn("Repeat");
-    let contentAdderBtns = getAll(".content-adder-box .btn");
+      Scenes.items.anchor_plate1.set(220, 129, 25).zIndex(8);
+      Scenes.items.anchor_plate2.set(220, 212, 25).zIndex(8);
+      Scenes.items.anchor_plate3.set(380, 129, 25).zIndex(8);
+      Scenes.items.anchor_plate4.set(380, 212, 25).zIndex(8);
+      Scenes.items.anchor_plate5.set(536, 129, 25).zIndex(8);
+      Scenes.items.anchor_plate6.set(536, 212, 25).zIndex(8);
 
-    let headAdapterCount = 0; 
-    let footAdapterCount = 0;
-    let ctPropCount = 0;
+      Scenes.items.wing_nut1.set(219, 137.5, 8).zIndex(9);
+      Scenes.items.wing_nut2.set(219, 220.5, 8).zIndex(9);
+      Scenes.items.wing_nut3.set(379, 137.5, 8).zIndex(9);
+      Scenes.items.wing_nut4.set(379, 220.5, 8).zIndex(9);
+      Scenes.items.wing_nut5.set(535, 137.5, 8).zIndex(9);
+      Scenes.items.wing_nut6.set(535, 220.5, 8).zIndex(9);
 
-    const headAdapterAnime = ()=>{
-      switch(headAdapterCount){
-        case 0:
-          anime.timeline({
-              easing: "easeInOutQuad",
-              duration: 1000,
-          })
-          .add({
-            targets: Scenes.items.head_adapter1.item,
-            left:220,
-            top:129,
-          })
-          .add({
-            targets: Scenes.items.head_adapter2.item,
-            left:220,
-            top:212,
-            complete(){
-              setCC("Click on the 'Foot Adapter' to support the CT Prop.")
-              Scenes.showArrowForMenuItem()
-            }
-          })
-          break
+      Scenes.items.ct_prop1.set(187, 250, 250, 50).rotate(90).zIndex(11);
+      Scenes.items.ct_prop2.set(153, 305, 185, 50).rotate(90).zIndex(11);
 
-        case 1:
-          anime.timeline({
-              easing: "easeInOutQuad",
-              duration: 1000,
-          })
-          .add({
-            targets: Scenes.items.head_adapter3.item,
-            left:380,
-            top:129,
-          })
-          .add({
-            targets: Scenes.items.head_adapter4.item,
-            left:380,
-            top:212,
-          })
-          break
+      Scenes.items.head_adapter1.set(400, 360, 25).zIndex(10);
+      Scenes.items.head_adapter2.set(440, 360, 25).zIndex(10);
 
-        case 2:
-          anime.timeline({
-              easing: "easeInOutQuad",
-              duration: 1000,
-          })
-          .add({
-            targets: Scenes.items.head_adapter5.item,
-            left:536,
-            top:129,
-          })
-          .add({
-            targets: Scenes.items.head_adapter6.item,
-            left:536,
-            top:212,
-          })
-          break
+      Scenes.items.foot_adapter1.set(510, 310, 75).zIndex(12);
 
-      }
-      headAdapterCount++;
-    }
-    
-    const footAdapterAnime = ()=>{
-      switch(footAdapterCount){
-        case 0:
-          anime({
-            easing: "easeInOutQuad",
-            targets: Scenes.items.foot_adapter1.item,
-            left:55,
-            top:280,
-            duration: 1000,
-            complete(){
-              setCC("Click on the 'CT Prop' to support the form floor panel.")
-              Scenes.showArrowForMenuItem()
-            }
-          })
-          break
-        case 1:
-          anime({
-            easing: "easeInOutQuad",
-            targets: Scenes.items.foot_adapter2.item,
-            left:216,
-            top:280,
-            duration: 1000,
-          })
-          break
-        case 2:
-          anime({
-            easing: "easeInOutQuad",
-            targets: Scenes.items.foot_adapter3.item,
-            left:376,
-            top:280,
-            duration: 1000,
-          })
-          break
+      // image Box
+      Scenes.items.imageBox.show("flex").set(750, 200);
+      Scenes.items.imageBoxSrc.item.src = "./src/images/real_head_adapter.png";
+      Scenes.items.imageBoxTitle.setContent("Head Adapter");
 
-        
-      }
-      footAdapterCount++;
-    }
+      //! remove
+      // Scenes.items.head_adapter1.set(220,129,25).zIndex(10)
+      // Scenes.items.head_adapter2.set(220,212,25).zIndex(10)
+      // Scenes.items.head_adapter3.set(380,129,25).zIndex(10)
+      // Scenes.items.head_adapter4.set(380,212,25).zIndex(10)
+      // Scenes.items.head_adapter5.set(536,129,25).zIndex(10)
+      // Scenes.items.head_adapter6.set(536,212,25).zIndex(10)
 
-    const ctPropAnime = ()=>{
-      let rotationCount = 2;
-      switch(ctPropCount){
-        case 0:
-          anime.timeline({
-              easing: "easeInOutQuad",
-              duration: 1000,
-          })
-          .add({
-            targets: Scenes.items.ct_prop1.item,
-            left:135, 
-            top:115,
-            rotate: 35
-          })
-          .add({
-            targets: Scenes.items.ct_prop2.item,
-            left:135, 
-            top:190,
-            rotate: 50,
-            complete(){
-              // for next step
-              Scenes.items.ct_prop3.set(187,250,250,50).rotate(90).zIndex(11)
-              Scenes.items.ct_prop4.set(153,305,185,50).rotate(90).zIndex(11)
-              
-              Scenes.items.head_adapter3.set(400,360,25).zIndex(10)
-              Scenes.items.head_adapter4.set(440,360,25).zIndex(10)
-              
-              Scenes.items.foot_adapter2.set(510,310,75).zIndex(12)
+      // Scenes.items.ct_prop1.set(135,115,250,50).rotate(35).zIndex(11)
+      // Scenes.items.ct_prop2.set(135,190,185,50).rotate(50).zIndex(11)
+      // Scenes.items.ct_prop3.set(295,115,250,50).rotate(35).zIndex(11)
+      // Scenes.items.ct_prop4.set(295,190,185,50).rotate(50).zIndex(11)
+      // Scenes.items.ct_prop5.set(455,115,250,50).rotate(35).zIndex(11)
+      // Scenes.items.ct_prop6.set(455,190,185,50).rotate(50).zIndex(11)
 
-              setCC("Click on the 'Repeat' to repeat the previous steps.")
-              Scenes.showArrowForMenuItem()
-            }
-          })
-          break
-        case 1:
-          anime.timeline({
-              easing: "easeInOutQuad",
-              duration: 1000,
-          })
-          .add({
-            targets: Scenes.items.ct_prop3.item,
-            left:295, 
-            top:115,
-            rotate: 35
-              
-          })
-          .add({
-            targets: Scenes.items.ct_prop4.item,
-            left:295, 
-            top:190,
-            rotate: 50,
-            complete(){
-              Scenes.items.ct_prop5.set(187,250,250,50).rotate(90).zIndex(11)
-              Scenes.items.ct_prop6.set(153,305,185,50).rotate(90).zIndex(11)
-              
-              Scenes.items.head_adapter5.set(400,360,25).zIndex(10)
-              Scenes.items.head_adapter6.set(440,360,25).zIndex(10)
-              
-              Scenes.items.foot_adapter3.set(510,310,75).zIndex(12)
+      // Scenes.items.foot_adapter1.set(55,280,75).zIndex(12)
+      // Scenes.items.foot_adapter2.set(216,280,75).zIndex(12)
+      // Scenes.items.foot_adapter3.set(376,280,75).zIndex(12)
 
-              //! for image box
-              Scenes.items.imageBoxSrc.item.src = "./src/images/real_foot_adapter.png";
-              Scenes.items.imageBoxTitle.setContent("Foot Adapter")
-              Scenes.repeatShowArrowForMenuItem()
-            }  
-          })
-          
-          break
-        case 2:
-          anime.timeline({
-            easing: "easeInOutQuad",
-            duration: 1000,
-          })
-          .add({
-            targets: Scenes.items.ct_prop5.item,
-            left:455, 
-            top:115,
-            rotate: 35
-              
-          })
-          .add({
-            targets: Scenes.items.ct_prop6.item,
-            left:455, 
-            top:190,
-            rotate: 50,
-            complete(){
-              // Quiz.loadQuiz();
+      // content adder
+      Scenes.items.contentAdderBox.set(null, -50).show("flex").push();
+      Scenes.contentAdderAddBtn("Head Adapter");
+      Scenes.contentAdderAddBtn("Foot Adapter");
+      Scenes.contentAdderAddBtn("CT Prop");
+      Scenes.contentAdderAddBtn("Repeat");
+      let contentAdderBtns = getAll(".content-adder-box .btn");
 
-              setIsProcessRunning(false);
-            }
-          })
-          break
-      }
+      let headAdapterCount = 0;
+      let footAdapterCount = 0;
+      let ctPropCount = 0;
 
-      ctPropCount++;
-    }
+      const headAdapterAnime = () => {
+        switch (headAdapterCount) {
+          case 0:
+            Dom.animePush(
+              anime
+                .timeline({
+                  easing: "easeInOutQuad",
+                  duration: 1000,
+                })
+                .add({
+                  targets: Scenes.items.head_adapter1.item,
+                  left: 220,
+                  top: 129,
+                })
+                .add({
+                  targets: Scenes.items.head_adapter2.item,
+                  left: 220,
+                  top: 212,
+                  complete() {
+                    setCC("Click on the 'Foot Adapter' to support the CT Prop.");
+                    Scenes.showArrowForMenuItem();
+                  },
+                })
+            );
+            break;
 
-    setCC("Click on the 'Head Adapter' to attach it with steel waler.")
-    Scenes.showArrowForMenuItem()
-    //onclick
-    contentAdderBtns[0].onclick = headAdapterAnime
-    contentAdderBtns[1].onclick = footAdapterAnime
-    contentAdderBtns[2].onclick = ctPropAnime
-    contentAdderBtns[3].onclick = function(){
-      headAdapterAnime()
-      footAdapterAnime()
-      ctPropAnime()
-    }
-    contentAdderBtns.forEach(cab=>{
-      let previousFunction = cab.onclick
-      cab.onclick = ()=>{
-        Dom.setBlinkArrow(-1)
-        previousFunction()
-      }
-    })
-    // setCC("Click 'Next' to go to next step");
-    //       Dom.setBlinkArrow(true, 790, 408).play();
-    //       setIsProcessRunning(false);
-          anime({
-            duration: 1000,
-            complete(){
-              Quiz.loadQuiz()
-            }
-          });
-        // };
+          case 1:
+            Dom.animePush(
+              anime
+                .timeline({
+                  easing: "easeInOutQuad",
+                  duration: 1000,
+                })
+                .add({
+                  targets: Scenes.items.head_adapter3.item,
+                  left: 380,
+                  top: 129,
+                })
+                .add({
+                  targets: Scenes.items.head_adapter4.item,
+                  left: 380,
+                  top: 212,
+                })
+            );
+            break;
+
+          case 2:
+            Dom.animePush(
+              anime
+                .timeline({
+                  easing: "easeInOutQuad",
+                  duration: 1000,
+                })
+                .add({
+                  targets: Scenes.items.head_adapter5.item,
+                  left: 536,
+                  top: 129,
+                })
+                .add({
+                  targets: Scenes.items.head_adapter6.item,
+                  left: 536,
+                  top: 212,
+                })
+            );
+            break;
+        }
+        headAdapterCount++;
+      };
+
+      const footAdapterAnime = () => {
+        switch (footAdapterCount) {
+          case 0:
+            Dom.animePush(
+              anime({
+                easing: "easeInOutQuad",
+                targets: Scenes.items.foot_adapter1.item,
+                left: 55,
+                top: 280,
+                duration: 1000,
+                complete() {
+                  setCC("Click on the 'CT Prop' to support the form floor panel.");
+                  Scenes.showArrowForMenuItem();
+                },
+              })
+            );
+            break;
+          case 1:
+            Dom.animePush(
+              anime({
+                easing: "easeInOutQuad",
+                targets: Scenes.items.foot_adapter2.item,
+                left: 216,
+                top: 280,
+                duration: 1000,
+              })
+            );
+            break;
+          case 2:
+            Dom.animePush(
+              anime({
+                easing: "easeInOutQuad",
+                targets: Scenes.items.foot_adapter3.item,
+                left: 376,
+                top: 280,
+                duration: 1000,
+              })
+            );
+            break;
+        }
+        footAdapterCount++;
+      };
+
+      const ctPropAnime = () => {
+        let rotationCount = 2;
+        switch (ctPropCount) {
+          case 0:
+            Dom.animePush(
+              anime
+                .timeline({
+                  easing: "easeInOutQuad",
+                  duration: 1000,
+                })
+                .add({
+                  targets: Scenes.items.ct_prop1.item,
+                  left: 135,
+                  top: 115,
+                  rotate: 35,
+                })
+                .add({
+                  targets: Scenes.items.ct_prop2.item,
+                  left: 135,
+                  top: 190,
+                  rotate: 50,
+                  complete() {
+                    // for next step
+                    Scenes.items.ct_prop3.set(187, 250, 250, 50).rotate(90).zIndex(11);
+                    Scenes.items.ct_prop4.set(153, 305, 185, 50).rotate(90).zIndex(11);
+
+                    Scenes.items.head_adapter3.set(400, 360, 25).zIndex(10);
+                    Scenes.items.head_adapter4.set(440, 360, 25).zIndex(10);
+
+                    Scenes.items.foot_adapter2.set(510, 310, 75).zIndex(12);
+
+                    setCC("Click on the 'Repeat' to repeat the previous steps.");
+                    Scenes.showArrowForMenuItem();
+                  },
+                })
+            );
+            break;
+          case 1:
+            Dom.animePush(
+              anime
+                .timeline({
+                  easing: "easeInOutQuad",
+                  duration: 1000,
+                })
+                .add({
+                  targets: Scenes.items.ct_prop3.item,
+                  left: 295,
+                  top: 115,
+                  rotate: 35,
+                })
+                .add({
+                  targets: Scenes.items.ct_prop4.item,
+                  left: 295,
+                  top: 190,
+                  rotate: 50,
+                  complete() {
+                    Scenes.items.ct_prop5.set(187, 250, 250, 50).rotate(90).zIndex(11);
+                    Scenes.items.ct_prop6.set(153, 305, 185, 50).rotate(90).zIndex(11);
+
+                    Scenes.items.head_adapter5.set(400, 360, 25).zIndex(10);
+                    Scenes.items.head_adapter6.set(440, 360, 25).zIndex(10);
+
+                    Scenes.items.foot_adapter3.set(510, 310, 75).zIndex(12);
+
+                    //! for image box
+                    Scenes.items.imageBoxSrc.item.src = "./src/images/real_foot_adapter.png";
+                    Scenes.items.imageBoxTitle.setContent("Foot Adapter");
+                    Scenes.repeatShowArrowForMenuItem();
+                  },
+                })
+            );
+
+            break;
+          case 2:
+            Dom.animePush(
+              anime
+                .timeline({
+                  easing: "easeInOutQuad",
+                  duration: 1000,
+                })
+                .add({
+                  targets: Scenes.items.ct_prop5.item,
+                  left: 455,
+                  top: 115,
+                  rotate: 35,
+                })
+                .add({
+                  targets: Scenes.items.ct_prop6.item,
+                  left: 455,
+                  top: 190,
+                  rotate: 50,
+                  complete() {
+                    Dom.animePush(
+                      anime({
+                        duration: 1000,
+                        complete() {
+                          Quiz.loadQuiz();
+                          setIsProcessRunning(false);
+                        },
+                      })
+                    );
+                  },
+                })
+            );
+            break;
+        }
+
+        ctPropCount++;
+      };
+
+      setCC("Click on the 'Head Adapter' to attach it with steel waler.");
+      Scenes.showArrowForMenuItem();
+      //onclick
+      contentAdderBtns[0].onclick = headAdapterAnime;
+      contentAdderBtns[1].onclick = footAdapterAnime;
+      contentAdderBtns[2].onclick = ctPropAnime;
+      contentAdderBtns[3].onclick = function () {
+        headAdapterAnime();
+        footAdapterAnime();
+        ctPropAnime();
+      };
+      contentAdderBtns.forEach((cab) => {
+        let previousFunction = cab.onclick;
+        cab.onclick = () => {
+          Dom.setBlinkArrow(-1);
+          previousFunction();
+        };
+      });
+      // setCC("Click 'Next' to go to next step");
+      //       Dom.setBlinkArrow(true, 790, 408).play();
+      //       setIsProcessRunning(false);
+      // };
       return true;
     }),
     (step7 = function () {
       setIsProcessRunning(true);
-      Scenes.setStepHeading(
-        "Step 7",
-        "Repeat Step 2 to Step 6 for remainnig three sides."
-      );
+      Scenes.setStepHeading("Step 7", "Repeat Step 2 to Step 6 for remaining three sides.");
       // todo remove all previous
       Scenes.items.contentAdderBox.setContent("");
 
       // todo Required Items
-     Scenes.items.full_foundation_front1.set(0,0).zIndex(4)
-     Scenes.items.full_foundation_front2.set(-400,0).zIndex(3).hidden()
-     Scenes.items.full_foundation_front3.set(-50,-50).zIndex(2).hidden()
-     Scenes.items.full_foundation_front4.set(100,0).zIndex(1).hidden()
-    
-    // content adder
-    Scenes.items.contentAdderBox.set(null, -50).show("flex").push();
-    Scenes.contentAdderAddBtn("Left Side");
-    Scenes.contentAdderAddBtn("Back Side");
-    Scenes.contentAdderAddBtn("Right Side");
-    let contentAdderBtns = getAll(".content-adder-box .btn");
+      Scenes.items.full_foundation_front1.set(0, 0).zIndex(4);
+      Scenes.items.full_foundation_front2.set(-400, 0).zIndex(3).hidden();
+      Scenes.items.full_foundation_front3.set(-50, -50).zIndex(2).hidden();
+      Scenes.items.full_foundation_front4.set(100, 0).zIndex(1).hidden();
 
-    const leftSideAnime = ()=>{
-      Scenes.items.full_foundation_front2.hidden(false)
-      anime({
-        targets: Scenes.items.full_foundation_front2.item,
-        left: 0,
-        easing: "easeOutQuad",
-        duration: 3000,
-        complete(){
-          setCC("Click on the 'Back Side' to add back side of the foundation.");      
-          Scenes.showArrowForMenuItem()
-        }
-      })
-    }
-    
-    const backSideAnime = ()=>{
-      Scenes.items.full_foundation_front3.hidden(false)
-      anime({
-        targets: Scenes.items.full_foundation_front3.item,
-        top: 0,
-        left: 0,
-        easing: "easeOutQuad",
-        duration: 3000,
-        complete(){
-          setCC("Click on the 'Right Side' to add right side of the foundation.");      
-          Scenes.showArrowForMenuItem()
-        }
-      })
-    }
+      // content adder
+      Scenes.items.contentAdderBox.set(null, -50).show("flex").push();
+      Scenes.contentAdderAddBtn("Left Side");
+      Scenes.contentAdderAddBtn("Back Side");
+      Scenes.contentAdderAddBtn("Right Side");
+      let contentAdderBtns = getAll(".content-adder-box .btn");
 
-    const rightSideAnime = ()=>{
-      Scenes.items.full_foundation_front4.hidden(false)
-      anime({
-        targets: Scenes.items.full_foundation_front4.item,
-        left: 0,
-        easing: "easeOutQuad",
-        duration: 3000,
-        complete(){
-          // Quiz.loadQuiz();
-
-          setIsProcessRunning(false);
-        }
-      })
-    }
-
-    setCC("Click on the 'Left Side' to add left side of the foundation.");      
-    Scenes.showArrowForMenuItem()
-    //onclick
-    contentAdderBtns[0].onclick = leftSideAnime
-    contentAdderBtns[1].onclick = backSideAnime
-    contentAdderBtns[2].onclick = rightSideAnime
-    contentAdderBtns.forEach(cab=>{
-      let previousFunction = cab.onclick
-      cab.onclick = ()=>{
-        Dom.setBlinkArrow(-1)
-        previousFunction()
-      }
-    })
-    // setCC("Click 'Next' to go to next step");
-    //       Dom.setBlinkArrow(true, 790, 408).play();
-    //       setIsProcessRunning(false);
+      const leftSideAnime = () => {
+        Scenes.items.full_foundation_front2.hidden(false);
+        Dom.animePush(
           anime({
-            duration: 1000,
-            complete(){
-              Quiz.loadQuiz()
-            }
-          });
-        // };
+            targets: Scenes.items.full_foundation_front2.item,
+            left: 0,
+            easing: "easeOutQuad",
+            duration: 3000,
+            complete() {
+              setCC("Click on the 'Back Side' to add back side of the foundation.");
+              Scenes.showArrowForMenuItem();
+            },
+          })
+        );
+      };
+
+      const backSideAnime = () => {
+        Scenes.items.full_foundation_front3.hidden(false);
+        Dom.animePush(
+          anime({
+            targets: Scenes.items.full_foundation_front3.item,
+            top: 0,
+            left: 0,
+            easing: "easeOutQuad",
+            duration: 3000,
+            complete() {
+              setCC("Click on the 'Right Side' to add right side of the foundation.");
+              Scenes.showArrowForMenuItem();
+            },
+          })
+        );
+      };
+
+      const rightSideAnime = () => {
+        Scenes.items.full_foundation_front4.hidden(false);
+        Dom.animePush(
+          anime({
+            targets: Scenes.items.full_foundation_front4.item,
+            left: 0,
+            easing: "easeOutQuad",
+            duration: 3000,
+            complete() {
+              Quiz.loadQuiz();
+              setIsProcessRunning(false);
+            },
+          })
+        );
+      };
+
+      setCC("Repeat Step 2 to Step 6 for remaining three sides.");
+      setCC("Click on the 'Left Side' to add left side of the foundation.");
+      Scenes.showArrowForMenuItem();
+      //onclick
+      contentAdderBtns[0].onclick = leftSideAnime;
+      contentAdderBtns[1].onclick = backSideAnime;
+      contentAdderBtns[2].onclick = rightSideAnime;
+      contentAdderBtns.forEach((cab) => {
+        let previousFunction = cab.onclick;
+        cab.onclick = () => {
+          Dom.setBlinkArrow(-1);
+          previousFunction();
+        };
+      });
+      // setCC("Click 'Next' to go to next step");
+      //       Dom.setBlinkArrow(true, 790, 408).play();
+      //       setIsProcessRunning(false);
+      // };
       return true;
     }),
-
 
     (completed = function () {
       Dom.hideAll();
       Scenes.items.contentAdderBox.setContent("");
 
-            let certificateExpName = get(".certificate .student-detail .row span:nth-child(2)")
-      certificateExpName.innerHTML = Scenes.experimentNameCertificate
+      let certificateExpName = get(".certificate .student-detail .row span:nth-child(2)");
+      certificateExpName.innerHTML = Scenes.experimentNameCertificate;
 
       // get(".btn-save").style.display = "block";
       Scenes.items.btn_save.show().push();
@@ -2662,9 +2769,13 @@ const Scenes = {
 
       let nxtBtn = get(".btn-next");
       nxtBtn.innerHTML = "Restart";
-      nxtBtn.onclick = function () {
-        location.reload();
-      };
+      toggleNextBtn();
+      setTimeout(() => {
+        nxtBtn.onclick = function () {
+          location.reload();
+        };
+        toggleNextBtn();
+      }, 2000);
 
       return true;
     }),
@@ -2676,14 +2787,19 @@ const Scenes = {
     // }
     if (this.currentStep > 1) {
       Scenes.items.btn_next.setContent("Next");
-      Scenes.items.btn_next.item.onclick = ()=>{}
+      Scenes.items.btn_next.item.onclick = () => {};
       this.currentStep -= 2;
+      // reset menu item for showArrow
+      this.menuItemNumber = 1;
       this.steps[this.currentStep]();
       this.currentStep++;
       backDrawerItem();
       backProgressBar();
-      // reset menu item for showArrow
-      this.menuItemNumber = 1;
+    }
+    if (this.currentStep > 1) {
+      get(".btn-back").style.visibility = "visible";
+    } else {
+      get(".btn-back").style.visibility = "hidden";
     }
   },
   next() {
@@ -2696,14 +2812,19 @@ const Scenes = {
         nextDrawerItem();
         nextProgressBar();
         this.currentStep++;
-      }         
+      }
     } else {
-      
+    }
+
+    if (this.currentStep > 1) {
+      get(".btn-back").style.visibility = "visible";
+    } else {
+      get(".btn-back").style.visibility = "hidden";
     }
   },
-}
+};
 
-// Scenes.steps[6](); 
+// Scenes.steps[6]();
 // stepcalling
 Scenes.currentStep = 0;
 Scenes.next();
@@ -2719,6 +2840,17 @@ backBtn.addEventListener("click", () => {
   Scenes.back();
 });
 
+// ! Global click listener for content-adder buttons to prevent double-triggering
+get(".content-adder-box").addEventListener(
+  "click",
+  (e) => {
+    if (e.target.closest(".content-adder")) {
+      Scenes.lockAllMenuItems();
+    }
+  },
+  true
+); // capturing phase ensures this runs before the button's own onclick
+
 // print certificate
 get(".btn-save").addEventListener("click", () => {
   window.print();
@@ -2728,32 +2860,15 @@ let muteBtn = get(".btn-mute");
 muteBtn.addEventListener("click", () => {
   if (isMute) {
     isMute = false;
-    muteBtn.src = "./src/images/speech_off_btn.png";
-    muteBtn.title = "Click to Mute";
-  } else {
-    isMute = true;
     muteBtn.src = "./src/images/speech_on_btn.png";
+    muteBtn.title = "Click to Mute";
+    if (currentSpeechText) textToSpeach(currentSpeechText);
+  } else {
+    muteBtn.src = "./src/images/speech_off_btn.png";
     muteBtn.title = "Click to Unmute";
+    isMute = true;
+    window.speechSynthesis.cancel();
   }
 });
-// Scenes.steps[2]()
-// Scenes.steps[6]()
-// Scenes.steps[5]()
-// Scenes.steps[5]()
-// Scenes.steps[5]()
-// Scenes.steps[6]()
 
-// i really enjoyed the voice of keybord
-// its amazing
 
-// mouse position
-// function getCursor(event) {
-//   let x = event.clientX;
-//   let y = event.clientY;
-//   let _position = `X: ${x - 419}<br>Y: ${y - 169}`;
-
-//   const infoElement = document.getElementById("info");
-//   infoElement.innerHTML = _position;
-//   infoElement.style.top = y + "px";
-//   infoElement.style.left = x + 20 + "px";
-// }
